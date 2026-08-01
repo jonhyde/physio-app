@@ -1,9 +1,18 @@
-/* Cache-first service worker. Bump CACHE when files change. */
-const CACHE = 'rehab-v3';
-const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg', './voices.html'];
+/* Cache-first service worker.
+   BUMP THE VERSION whenever any cached file changes, or devices keep the old copy. */
+const CACHE = 'rehab-v4';
+const ASSETS = [
+  './', './index.html', './programme.js',
+  './manifest.webmanifest', './icon.svg',
+  './voices.html', './test.html'
+];
 
 self.addEventListener('install', e => {
-  e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
+  e.waitUntil(
+    caches.open(CACHE)
+      .then(c => Promise.allSettled(ASSETS.map(a => c.add(a))))
+      .then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', e => {
@@ -14,13 +23,29 @@ self.addEventListener('activate', e => {
   );
 });
 
+/* Network-first for navigations so a new version is picked up when online,
+   falling back to cache when there is no signal. Cache-first for everything else. */
 self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
+
+  if (e.request.mode === 'navigate') {
+    e.respondWith(
+      fetch(e.request)
+        .then(res => {
+          const copy = res.clone();
+          caches.open(CACHE).then(c => c.put('./index.html', copy)).catch(() => {});
+          return res;
+        })
+        .catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+
   e.respondWith(
     caches.match(e.request).then(hit => hit || fetch(e.request).then(res => {
       const copy = res.clone();
       caches.open(CACHE).then(c => c.put(e.request, copy)).catch(() => {});
       return res;
-    }).catch(() => caches.match('./index.html')))
+    }))
   );
 });

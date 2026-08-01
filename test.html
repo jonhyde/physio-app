@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Capability test</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Capability test">
+<meta name="theme-color" content="#101418">
+<meta name="robots" content="noindex, nofollow">
+<link rel="apple-touch-icon" href="icon.svg">
+<style>
+  :root{
+    --bg:#101418; --panel:#1a2028; --line:#2b3441;
+    --ink:#eef2f6; --muted:#93a1b1;
+    --ok:#3ddc97; --bad:#ff6b6b; --warn:#ffc857; --accent:#6ea8fe;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:16px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+    padding:max(16px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom));
+    -webkit-text-size-adjust:100%;
+  }
+  h1{font-size:20px;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:14px;margin:0 0 20px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
+  .card h2{font-size:15px;margin:0 0 6px;letter-spacing:.02em}
+  .card p{margin:0 0 12px;color:var(--muted);font-size:13.5px}
+  button{
+    width:100%;padding:14px;border-radius:11px;border:0;
+    background:var(--accent);color:#08101c;font-size:16px;font-weight:600;
+    -webkit-appearance:none;cursor:pointer;
+  }
+  button.sec{background:#2b3441;color:var(--ink)}
+  button+button{margin-top:8px}
+  button:disabled{opacity:.45}
+  .status{margin-top:10px;font-size:13.5px;font-weight:600}
+  .ok{color:var(--ok)} .bad{color:var(--bad)} .warn{color:var(--warn)}
+  .env{font-size:13px;color:var(--muted)}
+  .env b{color:var(--ink);font-weight:600}
+  .env div{padding:3px 0;border-bottom:1px solid var(--line)}
+  .env div:last-child{border:0}
+  #log{
+    background:#0a0e12;border:1px solid var(--line);border-radius:11px;
+    padding:12px;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
+    color:var(--muted);height:190px;overflow:auto;white-space:pre-wrap;
+  }
+  .big{font-size:40px;text-align:center;font-variant-numeric:tabular-nums;margin:8px 0}
+</style>
+</head>
+<body>
+
+<h1>Rehab app capability test</h1>
+<p class="sub">Add to Home Screen, then run these from the home-screen icon, not Safari. Results differ.</p>
+
+<div class="card">
+  <h2>Environment</h2>
+  <div class="env" id="env"></div>
+</div>
+
+<div class="card">
+  <h2>Test 1 &middot; Speech on tap</h2>
+  <p>Baseline. Does the voice work at all, in en-GB?</p>
+  <button id="b1">Speak once</button>
+  <div class="status" id="s1">Not run</div>
+</div>
+
+<div class="card">
+  <h2>Test 2 &middot; Unprompted repeat speech</h2>
+  <p><b>The critical one.</b> One tap, then six spoken cues eight seconds apart with no further interaction. Put the phone down and do not touch it. This is exactly how a real set behaves.</p>
+  <button id="b2">Start (48 seconds)</button>
+  <div class="big" id="c2">&mdash;</div>
+  <div class="status" id="s2">Not run</div>
+</div>
+
+<div class="card">
+  <h2>Test 3 &middot; Speech after a long idle gap</h2>
+  <p>Tap, then leave it completely alone for 90 seconds. Tests whether iOS suspends the speech engine once the app looks idle.</p>
+  <button id="b3">Start (90 seconds)</button>
+  <div class="big" id="c3">&mdash;</div>
+  <div class="status" id="s3">Not run</div>
+</div>
+
+<div class="card">
+  <h2>Test 4 &middot; Screen Wake Lock</h2>
+  <p>Should stop the screen dimming during a session. Leave it on for a minute and see if the display stays lit.</p>
+  <button id="b4">Request wake lock</button>
+  <button id="b4b" class="sec">Release</button>
+  <div class="status" id="s4">Not run</div>
+</div>
+
+<div class="card">
+  <h2>Test 5 &middot; Beep with the silent switch ON</h2>
+  <p>Flick the physical mute switch on, then tap. If you hear nothing, beeps cannot be the only cue at 07:30.</p>
+  <button id="b5">Beep three times</button>
+  <div class="status" id="s5">Not run</div>
+</div>
+
+<div class="card">
+  <h2>Test 6 &middot; Offline</h2>
+  <p>Turn on aeroplane mode, force-quit the app, reopen it from the home screen. If it loads, offline works.</p>
+  <div class="status" id="s6">Checking…</div>
+</div>
+
+<div class="card">
+  <h2>Test 7 &middot; Backgrounding</h2>
+  <p>Start test 2, then immediately lock the phone or switch app. Come back and read the log. Tells us what happens if you get a phone call mid-set.</p>
+  <div class="status" id="s7">Watching…</div>
+</div>
+
+<div class="card">
+  <h2>Log</h2>
+  <div id="log"></div>
+  <button class="sec" id="copy" style="margin-top:10px">Copy log</button>
+</div>
+
+<script>
+const $=id=>document.getElementById(id);
+const logEl=$('log');
+let t0=Date.now();
+function log(m){
+  const t=((Date.now()-t0)/1000).toFixed(1).padStart(6,' ');
+  logEl.textContent+=`[${t}s] ${m}\n`;
+  logEl.scrollTop=logEl.scrollHeight;
+}
+function set(id,msg,cls){const e=$(id);e.textContent=msg;e.className='status '+(cls||'');}
+
+/* ---------- Environment ---------- */
+const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
+const env=[
+  ['Mode', standalone ? 'Home screen (standalone)' : 'Browser tab — ADD TO HOME SCREEN FIRST'],
+  ['speechSynthesis', 'speechSynthesis' in window ? 'available' : 'MISSING'],
+  ['Wake Lock', 'wakeLock' in navigator ? 'available' : 'MISSING'],
+  ['AudioContext', (window.AudioContext||window.webkitAudioContext) ? 'available' : 'MISSING'],
+  ['Service worker', 'serviceWorker' in navigator ? 'available' : 'MISSING'],
+  ['UA', navigator.userAgent.slice(0,90)]
+];
+$('env').innerHTML = env.map(([k,v])=>`<div><b>${k}:</b> ${v}</div>`).join('');
+log('Standalone: '+standalone);
+
+/* ---------- Voices ---------- */
+function listVoices(){
+  const v=speechSynthesis.getVoices();
+  if(!v.length){log('No voices reported yet');return;}
+  const gb=v.filter(x=>x.lang && x.lang.toLowerCase().startsWith('en-gb'));
+  log(`Voices: ${v.length} total, ${gb.length} en-GB`);
+  gb.slice(0,6).forEach(x=>log('  en-GB: '+x.name));
+}
+speechSynthesis.addEventListener('voiceschanged',listVoices);
+setTimeout(listVoices,600);
+
+/* ---------- Speech helper ---------- */
+let spokenOK=0, spokenFail=0;
+function say(text, tag){
+  return new Promise(res=>{
+    try{
+      const u=new SpeechSynthesisUtterance(text);
+      u.lang='en-GB'; u.rate=1;
+      const gb=speechSynthesis.getVoices().find(v=>v.lang && v.lang.toLowerCase().startsWith('en-gb'));
+      if(gb) u.voice=gb;
+      let settled=false;
+      u.onstart=()=>{log(`${tag} STARTED: "${text}"`);};
+      u.onend=()=>{if(!settled){settled=true;spokenOK++;log(`${tag} ended ok`);res(true);}};
+      u.onerror=e=>{if(!settled){settled=true;spokenFail++;log(`${tag} ERROR: ${e.error||'unknown'}`);res(false);}};
+      speechSynthesis.speak(u);
+      setTimeout(()=>{if(!settled){settled=true;spokenFail++;log(`${tag} TIMED OUT, never fired`);res(false);}},6000);
+    }catch(err){spokenFail++;log(`${tag} THREW: ${err.message}`);res(false);}
+  });
+}
+
+/* ---------- Test 1 ---------- */
+$('b1').onclick=async()=>{
+  set('s1','Speaking…','warn');
+  const ok=await say('Test one. Hold for forty five seconds.','T1');
+  set('s1', ok?'PASS — voice works':'FAIL — no speech', ok?'ok':'bad');
+};
+
+/* ---------- Test 2 ---------- */
+$('b2').onclick=async()=>{
+  $('b2').disabled=true; spokenOK=0; spokenFail=0;
+  set('s2','Running. Do not touch the phone.','warn');
+  const cues=['Set one. Begin.','Rest.','Set two. Begin.','Rest.','Set three. Begin.','Session complete.'];
+  await say(cues[0],'T2-1');
+  for(let i=1;i<cues.length;i++){
+    for(let s=8;s>0;s--){$('c2').textContent=s;await new Promise(r=>setTimeout(r,1000));}
+    $('c2').textContent='…';
+    await say(cues[i],'T2-'+(i+1));
+  }
+  $('c2').textContent='—';
+  const pass = spokenFail===0 && spokenOK===cues.length;
+  set('s2', pass?`PASS — all ${cues.length} cues fired unprompted`
+                :`FAIL — ${spokenOK} of ${cues.length} fired, ${spokenFail} failed`, pass?'ok':'bad');
+  $('b2').disabled=false;
+};
+
+/* ---------- Test 3 ---------- */
+$('b3').onclick=async()=>{
+  $('b3').disabled=true;
+  set('s3','Waiting 90 seconds. Leave it alone.','warn');
+  log('T3 idle period started');
+  for(let s=90;s>0;s--){$('c3').textContent=s;await new Promise(r=>setTimeout(r,1000));}
+  $('c3').textContent='—';
+  const ok=await say('Ninety seconds have passed. Still working.','T3');
+  set('s3', ok?'PASS — speech survives a long idle gap':'FAIL — speech died after idle', ok?'ok':'bad');
+  $('b3').disabled=false;
+};
+
+/* ---------- Test 4 ---------- */
+let lock=null;
+$('b4').onclick=async()=>{
+  if(!('wakeLock' in navigator)){set('s4','FAIL — API not supported','bad');return;}
+  try{
+    lock=await navigator.wakeLock.request('screen');
+    set('s4','HELD — watch whether the screen stays lit','ok');
+    log('Wake lock acquired');
+    lock.addEventListener('release',()=>{log('Wake lock RELEASED by system');set('s4','Released by the system','warn');});
+  }catch(e){set('s4','FAIL — '+e.message,'bad');log('Wake lock failed: '+e.message);}
+};
+$('b4b').onclick=async()=>{if(lock){await lock.release();lock=null;set('s4','Released manually','warn');}};
+
+/* ---------- Test 5 ---------- */
+$('b5').onclick=async()=>{
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext;
+    const ctx=new AC();
+    if(ctx.state==='suspended') await ctx.resume();
+    for(let i=0;i<3;i++){
+      const o=ctx.createOscillator(), g=ctx.createGain();
+      o.frequency.value=880; o.connect(g); g.connect(ctx.destination);
+      g.gain.setValueAtTime(0.001,ctx.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.4,ctx.currentTime+0.01);
+      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.18);
+      o.start(); o.stop(ctx.currentTime+0.2);
+      await new Promise(r=>setTimeout(r,320));
+    }
+    log('Beeps played, context state: '+ctx.state);
+    set('s5','Played. Did you actually HEAR them with mute on?','warn');
+  }catch(e){set('s5','FAIL — '+e.message,'bad');log('Beep failed: '+e.message);}
+};
+
+/* ---------- Test 6 ---------- */
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('sw.js')
+    .then(()=>{set('s6','Service worker registered. Now try aeroplane mode.','ok');log('SW registered');})
+    .catch(e=>{set('s6','FAIL — '+e.message,'bad');log('SW failed: '+e.message);});
+}else{set('s6','FAIL — service workers unavailable','bad');}
+
+/* ---------- Test 7 ---------- */
+document.addEventListener('visibilitychange',()=>{
+  log('VISIBILITY → '+document.visibilityState);
+  if(document.visibilityState==='visible'){
+    set('s7','Came back into view. Check the log for what happened.','warn');
+  }else{
+    set('s7','Backgrounded…','warn');
+  }
+});
+window.addEventListener('pagehide',()=>log('pagehide fired'));
+window.addEventListener('freeze',()=>log('FROZEN by the system'));
+window.addEventListener('resume',()=>log('resumed from frozen'));
+set('s7','Watching. Background the app during test 2.','');
+
+/* ---------- Copy ---------- */
+$('copy').onclick=async()=>{
+  try{await navigator.clipboard.writeText(logEl.textContent);$('copy').textContent='Copied';
+      setTimeout(()=>$('copy').textContent='Copy log',1500);}
+  catch(e){$('copy').textContent='Copy failed, select manually';}
+};
+
+log('Page ready');
+</script>
+</body>
+</html>

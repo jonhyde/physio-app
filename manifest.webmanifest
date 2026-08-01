@@ -1,12 +1,12 @@
 {
-  "name": "Rehab capability test",
-  "short_name": "Rehab test",
+  "name": "Rehab",
+  "short_name": "Rehab",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#101418",
-  "theme_color": "#101418",
+  "background_color": "#0d1117",
+  "theme_color": "#0d1117",
   "icons": [
     { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ]

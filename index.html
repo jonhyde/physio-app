@@ -3,274 +3,632 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Capability test</title>
+<title>Rehab</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Capability test">
-<meta name="theme-color" content="#101418">
+<meta name="apple-mobile-web-app-title" content="Rehab">
+<meta name="theme-color" content="#0d1117">
 <meta name="robots" content="noindex, nofollow">
 <link rel="apple-touch-icon" href="icon.svg">
 <style>
   :root{
-    --bg:#101418; --panel:#1a2028; --line:#2b3441;
-    --ink:#eef2f6; --muted:#93a1b1;
-    --ok:#3ddc97; --bad:#ff6b6b; --warn:#ffc857; --accent:#6ea8fe;
+    --bg:#0d1117; --panel:#161c24; --panel2:#1d2531; --line:#2b3441;
+    --ink:#f2f6fa; --muted:#8fa0b3; --dim:#5d6b7d;
+    --go:#3ddc97; --rest:#6ea8fe; --warn:#ffc857; --stop:#ff6b6b;
+    --fabric:#ffc857; --pilates:#6ea8fe;
   }
-  *{box-sizing:border-box}
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{height:100%}
   body{
-    margin:0; background:var(--bg); color:var(--ink);
-    font:16px/1.5 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
-    padding:max(16px,env(safe-area-inset-top)) 16px max(24px,env(safe-area-inset-bottom));
-    -webkit-text-size-adjust:100%;
+    margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text",system-ui,sans-serif;
+    -webkit-text-size-adjust:100%;overflow:hidden;
   }
-  h1{font-size:20px;margin:0 0 4px}
-  .sub{color:var(--muted);font-size:14px;margin:0 0 20px}
-  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:12px}
-  .card h2{font-size:15px;margin:0 0 6px;letter-spacing:.02em}
-  .card p{margin:0 0 12px;color:var(--muted);font-size:13.5px}
-  button{
-    width:100%;padding:14px;border-radius:11px;border:0;
-    background:var(--accent);color:#08101c;font-size:16px;font-weight:600;
-    -webkit-appearance:none;cursor:pointer;
+  #app{
+    height:100%;display:flex;flex-direction:column;
+    padding:max(14px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));
   }
-  button.sec{background:#2b3441;color:var(--ink)}
-  button+button{margin-top:8px}
-  button:disabled{opacity:.45}
-  .status{margin-top:10px;font-size:13.5px;font-weight:600}
-  .ok{color:var(--ok)} .bad{color:var(--bad)} .warn{color:var(--warn)}
-  .env{font-size:13px;color:var(--muted)}
-  .env b{color:var(--ink);font-weight:600}
-  .env div{padding:3px 0;border-bottom:1px solid var(--line)}
-  .env div:last-child{border:0}
-  #log{
-    background:#0a0e12;border:1px solid var(--line);border-radius:11px;
-    padding:12px;font:12px/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;
-    color:var(--muted);height:190px;overflow:auto;white-space:pre-wrap;
+  .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
+  .bar{display:flex;justify-content:space-between;align-items:center;
+       font-size:12.5px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase;
+       padding-bottom:10px;flex:none}
+  .bar b{color:var(--muted);font-weight:600}
+  .bar button{background:none;border:0;color:var(--dim);font-size:12.5px;
+              text-transform:uppercase;letter-spacing:.06em;padding:4px 0}
+
+  h1{font-size:30px;line-height:1.15;margin:0 0 2px;letter-spacing:-.02em}
+  h2{font-size:19px;margin:0 0 10px}
+  .clinical{color:var(--dim);font-size:12.5px;margin:0 0 14px}
+  .lede{color:var(--muted);font-size:15px;margin:0 0 18px}
+
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:15px;
+        padding:15px;margin-bottom:10px}
+  .kicker{font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;
+          color:var(--dim);margin:0 0 6px;font-weight:600}
+
+  button.big{
+    width:100%;border:0;border-radius:16px;padding:26px 18px;
+    font-size:23px;font-weight:700;color:#07120c;background:var(--go);
+    -webkit-appearance:none;letter-spacing:-.01em;flex:none;
   }
-  .big{font-size:40px;text-align:center;font-variant-numeric:tabular-nums;margin:8px 0}
+  button.big small{display:block;font-size:14px;font-weight:600;opacity:.72;margin-top:5px;letter-spacing:0}
+  button.sec{
+    width:100%;border:1px solid var(--line);border-radius:13px;padding:15px;
+    font-size:15px;font-weight:600;color:var(--muted);background:transparent;
+    -webkit-appearance:none;margin-top:9px;flex:none;
+  }
+  button.blue{background:var(--rest);color:#06121f}
+  button:disabled{opacity:.4}
+
+  /* exercise list */
+  .ex{display:flex;justify-content:space-between;align-items:center;gap:12px;
+      padding:12px 0;border-bottom:1px solid var(--line)}
+  .ex:last-child{border:0}
+  .nm{font-size:16.5px;font-weight:600}
+  .cl{font-size:11.5px;color:var(--dim)}
+  .ex .rp{font-size:15px;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+  .dot{display:inline-block;width:9px;height:9px;border-radius:3px;margin-right:7px;vertical-align:1px}
+  .legend{display:flex;gap:16px;font-size:12.5px;color:var(--muted);margin-top:12px}
+
+  /* mid set */
+  .side{font-size:13px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);margin-bottom:2px}
+  .sideval{font-size:56px;font-weight:800;line-height:1;letter-spacing:-.03em;margin-bottom:14px}
+  .metrics{display:flex;gap:10px;margin-bottom:14px}
+  .metric{flex:1;background:var(--panel);border:1px solid var(--line);
+          border-radius:13px;padding:12px 13px}
+  .metric .k{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--dim)}
+  .metric .v{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;line-height:1.15}
+  .cue{font-size:17px;color:var(--ink);margin:0 0 8px}
+  .steps{margin:0;padding-left:19px;color:var(--muted);font-size:14.5px}
+  .steps li{margin-bottom:5px}
+
+  /* override */
+  .ovr{border:1px solid var(--warn);background:rgba(255,200,87,.09);
+       border-radius:14px;padding:14px;margin-bottom:10px}
+  .ovr .kicker{color:var(--warn)}
+  .ovr h3{margin:0 0 6px;font-size:21px;color:var(--warn)}
+  .ovr p{margin:0;font-size:15px;color:var(--ink)}
+  .stock{margin-top:11px;padding-top:11px;border-top:1px solid rgba(255,200,87,.25)}
+  .stock .kicker{color:var(--dim)}
+  .stock s{color:var(--dim);font-size:14px}
+
+  /* rest ring */
+  .ringwrap{position:relative;width:212px;height:212px;margin:6px auto 14px}
+  .ringwrap svg{transform:rotate(-90deg)}
+  .ringtxt{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);text-align:center}
+  .ringtxt .n{font-size:62px;font-weight:800;font-variant-numeric:tabular-nums;line-height:1}
+  .ringtxt .l{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+
+  /* blocks (B1) */
+  .blk{display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:12px;
+       border:1px solid var(--line);margin-bottom:8px;color:var(--dim);font-size:16px}
+  .blk.now{border-color:var(--go);background:rgba(61,220,151,.1);color:var(--ink);font-weight:700}
+  .blk.done{color:var(--dim)}
+  .blk .tick{width:22px;flex:none;text-align:center;font-size:15px}
+  .footbar{border-radius:12px;padding:12px 14px;margin-bottom:12px;font-weight:700;
+           font-size:15px;letter-spacing:.02em}
+
+  .kit{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-bottom:1px solid var(--line)}
+  .kit:last-child{border:0}
+  .kit .sw{width:11px;height:38px;border-radius:4px;flex:none;margin-top:2px}
+  .kit .t{font-weight:700;font-size:15.5px}
+  .kit .d{color:var(--muted);font-size:14px}
+  .kit .u{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-top:3px}
+
+  .chk{display:flex;align-items:center;gap:13px;padding:15px 0;border-bottom:1px solid var(--line)}
+  .chk:last-of-type{border:0}
+  .box{width:27px;height:27px;border-radius:8px;border:2px solid var(--line);flex:none;
+       display:flex;align-items:center;justify-content:center;font-size:15px;color:#07120c}
+  .box.on{background:var(--go);border-color:var(--go)}
+
+  select{width:100%;padding:13px;border-radius:11px;background:#0a0e13;color:var(--ink);
+         border:1px solid var(--line);font-size:15px;-webkit-appearance:none;margin-bottom:10px}
+  .rng{display:flex;align-items:center;gap:11px;margin-bottom:8px}
+  .rng span{font-size:13px;color:var(--muted);min-width:46px}
+  .rng input{flex:1}
+  .big-note{font-size:14px;color:var(--muted)}
 </style>
 </head>
 <body>
+<div id="app"></div>
 
-<h1>Rehab app capability test</h1>
-<p class="sub">Add to Home Screen, then run these from the home-screen icon, not Safari. Results differ.</p>
-
-<div class="card">
-  <h2>Environment</h2>
-  <div class="env" id="env"></div>
-</div>
-
-<div class="card">
-  <h2>Test 1 &middot; Speech on tap</h2>
-  <p>Baseline. Does the voice work at all, in en-GB?</p>
-  <button id="b1">Speak once</button>
-  <div class="status" id="s1">Not run</div>
-</div>
-
-<div class="card">
-  <h2>Test 2 &middot; Unprompted repeat speech</h2>
-  <p><b>The critical one.</b> One tap, then six spoken cues eight seconds apart with no further interaction. Put the phone down and do not touch it. This is exactly how a real set behaves.</p>
-  <button id="b2">Start (48 seconds)</button>
-  <div class="big" id="c2">&mdash;</div>
-  <div class="status" id="s2">Not run</div>
-</div>
-
-<div class="card">
-  <h2>Test 3 &middot; Speech after a long idle gap</h2>
-  <p>Tap, then leave it completely alone for 90 seconds. Tests whether iOS suspends the speech engine once the app looks idle.</p>
-  <button id="b3">Start (90 seconds)</button>
-  <div class="big" id="c3">&mdash;</div>
-  <div class="status" id="s3">Not run</div>
-</div>
-
-<div class="card">
-  <h2>Test 4 &middot; Screen Wake Lock</h2>
-  <p>Should stop the screen dimming during a session. Leave it on for a minute and see if the display stays lit.</p>
-  <button id="b4">Request wake lock</button>
-  <button id="b4b" class="sec">Release</button>
-  <div class="status" id="s4">Not run</div>
-</div>
-
-<div class="card">
-  <h2>Test 5 &middot; Beep with the silent switch ON</h2>
-  <p>Flick the physical mute switch on, then tap. If you hear nothing, beeps cannot be the only cue at 07:30.</p>
-  <button id="b5">Beep three times</button>
-  <div class="status" id="s5">Not run</div>
-</div>
-
-<div class="card">
-  <h2>Test 6 &middot; Offline</h2>
-  <p>Turn on aeroplane mode, force-quit the app, reopen it from the home screen. If it loads, offline works.</p>
-  <div class="status" id="s6">Checking…</div>
-</div>
-
-<div class="card">
-  <h2>Test 7 &middot; Backgrounding</h2>
-  <p>Start test 2, then immediately lock the phone or switch app. Come back and read the log. Tells us what happens if you get a phone call mid-set.</p>
-  <div class="status" id="s7">Watching…</div>
-</div>
-
-<div class="card">
-  <h2>Log</h2>
-  <div id="log"></div>
-  <button class="sec" id="copy" style="margin-top:10px">Copy log</button>
-</div>
-
+<script src="programme.js"></script>
 <script>
-const $=id=>document.getElementById(id);
-const logEl=$('log');
-let t0=Date.now();
-function log(m){
-  const t=((Date.now()-t0)/1000).toFixed(1).padStart(6,' ');
-  logEl.textContent+=`[${t}s] ${m}\n`;
-  logEl.scrollTop=logEl.scrollHeight;
-}
-function set(id,msg,cls){const e=$(id);e.textContent=msg;e.className='status '+(cls||'');}
-
-/* ---------- Environment ---------- */
-const standalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true;
-const env=[
-  ['Mode', standalone ? 'Home screen (standalone)' : 'Browser tab — ADD TO HOME SCREEN FIRST'],
-  ['speechSynthesis', 'speechSynthesis' in window ? 'available' : 'MISSING'],
-  ['Wake Lock', 'wakeLock' in navigator ? 'available' : 'MISSING'],
-  ['AudioContext', (window.AudioContext||window.webkitAudioContext) ? 'available' : 'MISSING'],
-  ['Service worker', 'serviceWorker' in navigator ? 'available' : 'MISSING'],
-  ['UA', navigator.userAgent.slice(0,90)]
-];
-$('env').innerHTML = env.map(([k,v])=>`<div><b>${k}:</b> ${v}</div>`).join('');
-log('Standalone: '+standalone);
-
-/* ---------- Voices ---------- */
-function listVoices(){
-  const v=speechSynthesis.getVoices();
-  if(!v.length){log('No voices reported yet');return;}
-  const gb=v.filter(x=>x.lang && x.lang.toLowerCase().startsWith('en-gb'));
-  log(`Voices: ${v.length} total, ${gb.length} en-GB`);
-  gb.slice(0,6).forEach(x=>log('  en-GB: '+x.name));
-}
-speechSynthesis.addEventListener('voiceschanged',listVoices);
-setTimeout(listVoices,600);
-
-/* ---------- Speech helper ---------- */
-let spokenOK=0, spokenFail=0;
-function say(text, tag){
-  return new Promise(res=>{
-    try{
-      const u=new SpeechSynthesisUtterance(text);
-      u.lang='en-GB'; u.rate=1;
-      const gb=speechSynthesis.getVoices().find(v=>v.lang && v.lang.toLowerCase().startsWith('en-gb'));
-      if(gb) u.voice=gb;
-      let settled=false;
-      u.onstart=()=>{log(`${tag} STARTED: "${text}"`);};
-      u.onend=()=>{if(!settled){settled=true;spokenOK++;log(`${tag} ended ok`);res(true);}};
-      u.onerror=e=>{if(!settled){settled=true;spokenFail++;log(`${tag} ERROR: ${e.error||'unknown'}`);res(false);}};
-      speechSynthesis.speak(u);
-      setTimeout(()=>{if(!settled){settled=true;spokenFail++;log(`${tag} TIMED OUT, never fired`);res(false);}},6000);
-    }catch(err){spokenFail++;log(`${tag} THREW: ${err.message}`);res(false);}
-  });
-}
-
-/* ---------- Test 1 ---------- */
-$('b1').onclick=async()=>{
-  set('s1','Speaking…','warn');
-  const ok=await say('Test one. Hold for forty five seconds.','T1');
-  set('s1', ok?'PASS — voice works':'FAIL — no speech', ok?'ok':'bad');
+/* =================== state =================== */
+const app = document.getElementById('app');
+const LS = {
+  get:(k,d)=>{ try{ const v=localStorage.getItem('rehab.'+k); return v===null?d:JSON.parse(v);}catch(e){return d} },
+  set:(k,v)=>{ try{ localStorage.setItem('rehab.'+k, JSON.stringify(v)); }catch(e){} }
 };
+let steps=[], idx=0, sessionKey=null, timer=null, wakeLock=null, startedAt=null;
 
-/* ---------- Test 2 ---------- */
-$('b2').onclick=async()=>{
-  $('b2').disabled=true; spokenOK=0; spokenFail=0;
-  set('s2','Running. Do not touch the phone.','warn');
-  const cues=['Set one. Begin.','Rest.','Set two. Begin.','Rest.','Set three. Begin.','Session complete.'];
-  await say(cues[0],'T2-1');
-  for(let i=1;i<cues.length;i++){
-    for(let s=8;s>0;s--){$('c2').textContent=s;await new Promise(r=>setTimeout(r,1000));}
-    $('c2').textContent='…';
-    await say(cues[i],'T2-'+(i+1));
-  }
-  $('c2').textContent='—';
-  const pass = spokenFail===0 && spokenOK===cues.length;
-  set('s2', pass?`PASS — all ${cues.length} cues fired unprompted`
-                :`FAIL — ${spokenOK} of ${cues.length} fired, ${spokenFail} failed`, pass?'ok':'bad');
-  $('b2').disabled=false;
-};
+/* =================== voice =================== */
+let voices=[];
+function loadVoices(){ voices = speechSynthesis.getVoices() || []; }
+speechSynthesis.addEventListener('voiceschanged', loadVoices);
+loadVoices(); setTimeout(loadVoices,500); setTimeout(loadVoices,1500);
 
-/* ---------- Test 3 ---------- */
-$('b3').onclick=async()=>{
-  $('b3').disabled=true;
-  set('s3','Waiting 90 seconds. Leave it alone.','warn');
-  log('T3 idle period started');
-  for(let s=90;s>0;s--){$('c3').textContent=s;await new Promise(r=>setTimeout(r,1000));}
-  $('c3').textContent='—';
-  const ok=await say('Ninety seconds have passed. Still working.','T3');
-  set('s3', ok?'PASS — speech survives a long idle gap':'FAIL — speech died after idle', ok?'ok':'bad');
-  $('b3').disabled=false;
-};
-
-/* ---------- Test 4 ---------- */
-let lock=null;
-$('b4').onclick=async()=>{
-  if(!('wakeLock' in navigator)){set('s4','FAIL — API not supported','bad');return;}
+function chosenVoice(){
+  const want = LS.get('voice', CONFIG.defaultVoice);
+  return voices.find(v=>v.name===want)
+      || voices.find(v=>v.name===CONFIG.defaultVoice)
+      || voices.find(v=>(v.lang||'').toLowerCase().startsWith('en-gb'))
+      || voices.find(v=>(v.lang||'').toLowerCase().startsWith('en'))
+      || null;
+}
+function say(text){
+  if(!text || !LS.get('speech',true)) return;
   try{
-    lock=await navigator.wakeLock.request('screen');
-    set('s4','HELD — watch whether the screen stays lit','ok');
-    log('Wake lock acquired');
-    lock.addEventListener('release',()=>{log('Wake lock RELEASED by system');set('s4','Released by the system','warn');});
-  }catch(e){set('s4','FAIL — '+e.message,'bad');log('Wake lock failed: '+e.message);}
-};
-$('b4b').onclick=async()=>{if(lock){await lock.release();lock=null;set('s4','Released manually','warn');}};
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    const v=chosenVoice();
+    if(v){ u.voice=v; u.lang=v.lang; } else u.lang='en-GB';
+    u.rate=LS.get('rate',1); u.pitch=1;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
 
-/* ---------- Test 5 ---------- */
-$('b5').onclick=async()=>{
-  try{
-    const AC=window.AudioContext||window.webkitAudioContext;
-    const ctx=new AC();
-    if(ctx.state==='suspended') await ctx.resume();
-    for(let i=0;i<3;i++){
-      const o=ctx.createOscillator(), g=ctx.createGain();
-      o.frequency.value=880; o.connect(g); g.connect(ctx.destination);
-      g.gain.setValueAtTime(0.001,ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.4,ctx.currentTime+0.01);
-      g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+0.18);
-      o.start(); o.stop(ctx.currentTime+0.2);
-      await new Promise(r=>setTimeout(r,320));
-    }
-    log('Beeps played, context state: '+ctx.state);
-    set('s5','Played. Did you actually HEAR them with mute on?','warn');
-  }catch(e){set('s5','FAIL — '+e.message,'bad');log('Beep failed: '+e.message);}
-};
-
-/* ---------- Test 6 ---------- */
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js')
-    .then(()=>{set('s6','Service worker registered. Now try aeroplane mode.','ok');log('SW registered');})
-    .catch(e=>{set('s6','FAIL — '+e.message,'bad');log('SW failed: '+e.message);});
-}else{set('s6','FAIL — service workers unavailable','bad');}
-
-/* ---------- Test 7 ---------- */
+/* =================== wake lock =================== */
+async function lockScreen(){
+  if(!('wakeLock' in navigator)) return;
+  try{ wakeLock = await navigator.wakeLock.request('screen'); }catch(e){}
+}
 document.addEventListener('visibilitychange',()=>{
-  log('VISIBILITY → '+document.visibilityState);
   if(document.visibilityState==='visible'){
-    set('s7','Came back into view. Check the log for what happened.','warn');
+    if(sessionKey) lockScreen();
+    loadVoices();
   }else{
-    set('s7','Backgrounded…','warn');
+    speechSynthesis.cancel();
   }
 });
-window.addEventListener('pagehide',()=>log('pagehide fired'));
-window.addEventListener('freeze',()=>log('FROZEN by the system'));
-window.addEventListener('resume',()=>log('resumed from frozen'));
-set('s7','Watching. Background the app during test 2.','');
 
-/* ---------- Copy ---------- */
-$('copy').onclick=async()=>{
-  try{await navigator.clipboard.writeText(logEl.textContent);$('copy').textContent='Copied';
-      setTimeout(()=>$('copy').textContent='Copy log',1500);}
-  catch(e){$('copy').textContent='Copy failed, select manually';}
-};
+/* =================== build the run =================== */
+function otherLeg(l){ return l==='Left' ? 'Right' : 'Left'; }
 
-log('Page ready');
+function buildSteps(order){
+  const out=[{type:'setup', order}];
+  order.forEach((id,i)=>{
+    const ex=EXERCISES[id];
+    out.push({type:'intro', id, first:i===0, n:i+1, total:order.length});
+
+    if(ex.perSide && ex.groupBySide){
+      const legs=[CONFIG.leadingLeg, otherLeg(CONFIG.leadingLeg)];
+      legs.forEach((leg,li)=>{
+        for(let s=1;s<=ex.sets;s++){
+          out.push({type:'set', id, setNo:s, side:leg, n:i+1, total:order.length});
+          if(s<ex.sets) out.push({type:'rest', id, next:`Set ${s+1} of ${ex.sets}, ${leg} leg`});
+        }
+        if(li===0) out.push({type:'swap', id, to:legs[1]});
+      });
+    }
+    else if(ex.perSide && ex.blocks){
+      const legs=[CONFIG.leadingLeg, otherLeg(CONFIG.leadingLeg)];
+      for(let s=1;s<=ex.sets;s++){
+        legs.forEach(leg=>{
+          ex.blocks.forEach((b,bi)=>{
+            out.push({type:'block', id, setNo:s, side:leg, blockNo:bi, n:i+1, total:order.length});
+          });
+        });
+        if(s<ex.sets) out.push({type:'rest', id, next:`Set ${s+1} of ${ex.sets}`});
+      }
+    }
+    else{
+      for(let s=1;s<=ex.sets;s++){
+        out.push({type:'set', id, setNo:s, n:i+1, total:order.length});
+        if(s<ex.sets) out.push({type:'rest', id, next:`Set ${s+1} of ${ex.sets}`});
+      }
+    }
+  });
+  out.push({type:'finish'});
+  return out;
+}
+
+/* =================== helpers =================== */
+function topbar(left,right){
+  return `<div class="bar"><b>${left}</b>${right?`<button onclick="quit()">${right}</button>`:''}</div>`;
+}
+function bandChip(ex){
+  if(!ex.band) return '';
+  const b=BANDS[ex.band];
+  return `<span class="dot" style="background:${b.colour}"></span>${b.label}`;
+}
+function go(n){ idx=n; render(); }
+function next(){ go(idx+1); }
+
+/* =================== screens =================== */
+
+function screenToday(){
+  const d=new Date();
+  const auto=WEEK[d.getDay()];
+  const key=sessionKey||auto;
+  const fmt=d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+
+  if(!key){
+    app.innerHTML = topbar(fmt,'Settings') + `
+      <div class="scroll">
+        <h1>Rest day</h1>
+        <p class="lede">Nothing scheduled today. Rest days are part of the programme, not a gap in it.</p>
+        <div class="card"><p class="kicker">Next up</p><div class="big-note">${nextSessionText()}</div></div>
+      </div>
+      <button class="sec" onclick="pick('A')">Do Rehab A anyway</button>
+      <button class="sec" onclick="pick('B')">Do Rehab B anyway</button>`;
+    return;
+  }
+
+  const s=SESSIONS[key];
+  const rows=s.order.map(id=>{
+    const e=EXERCISES[id];
+    const reps=typeof e.reps==='number'
+      ? `${e.sets}&times;${e.reps}${e.perSide?' ea':''}` : `${e.sets}&times;${e.reps}`;
+    return `<div class="ex"><div><div class="nm">${e.name}</div>
+            <div class="cl">${e.clinical}</div></div><div class="rp">${reps}</div></div>`;
+  }).join('');
+
+  app.innerHTML = topbar(fmt,'Settings') + `
+    <div class="scroll">
+      <p class="kicker">Today is</p>
+      <h1>${s.title}</h1>
+      <p class="lede">${s.order.length} exercises &middot; around 20 minutes</p>
+      <div class="card">${rows}
+        <div class="legend">
+          <div><span class="dot" style="background:var(--fabric)"></span>fabric loop</div>
+          <div><span class="dot" style="background:var(--pilates)"></span>pilates band</div>
+        </div>
+      </div>
+    </div>
+    <button class="big" onclick="start('${key}')">Start session</button>
+    <button class="sec" onclick="shorter('${key}')">Shorter session &mdash; pick 2</button>`;
+}
+
+function nextSessionText(){
+  const t=new Date();
+  for(let i=1;i<=7;i++){
+    const d=new Date(t); d.setDate(t.getDate()+i);
+    const k=WEEK[d.getDay()];
+    if(k) return `${SESSIONS[k].title} on ${d.toLocaleDateString('en-GB',{weekday:'long'})}`;
+  }
+  return '';
+}
+
+function shorter(key){
+  const s=SESSIONS[key];
+  const chosen=new Set();
+  const draw=()=>{
+    app.innerHTML = topbar('Shorter session','') + `
+      <div class="scroll">
+        <h1>Pick what you can</h1>
+        <p class="lede">Reiss said this is a real session, not a compromise. Vary which ones you pick.</p>
+        <div class="card">${s.order.map((id,i)=>{
+          const e=EXERCISES[id];
+          return `<div class="chk" onclick="window.__t(${i})">
+                    <div class="box ${chosen.has(id)?'on':''}">${chosen.has(id)?'&check;':''}</div>
+                    <div><div class="nm">${e.name}</div><div class="cl">${bandChip(e)}</div></div>
+                  </div>`;
+        }).join('')}</div>
+      </div>
+      <button class="big" ${chosen.size?'':'disabled'} onclick="window.__run()">
+        Start ${chosen.size} exercise${chosen.size===1?'':'s'}</button>
+      <button class="sec" onclick="render()">Back</button>`;
+  };
+  window.__t=i=>{ const id=s.order[i]; chosen.has(id)?chosen.delete(id):chosen.add(id); draw(); };
+  window.__run=()=>{ if(chosen.size) start(key, s.order.filter(id=>chosen.has(id))); };
+  draw();
+}
+
+function pick(k){ sessionKey=k; render(); }
+
+function start(key, order){
+  sessionKey=key; startedAt=Date.now();
+  steps=buildSteps(order || SESSIONS[key].order);
+  idx=0; lockScreen(); render();
+}
+
+function quit(){
+  if(!sessionKey || steps.length===0){ screenSettings(); return; }
+  if(confirm('Leave this session?')){
+    speechSynthesis.cancel(); clearInterval(timer);
+    steps=[]; idx=0; sessionKey=null; render();
+  }
+}
+
+/* ---------- setup ---------- */
+function screenSetup(st){
+  const used={};
+  st.order.forEach(id=>{ const e=EXERCISES[id]; if(e.band){ (used[e.band]=used[e.band]||[]).push(e); } });
+
+  const kit=Object.entries(used).map(([b,list])=>{
+    const notes=[...new Set(list.map(e=>e.bandNote))].join('. ');
+    return `<div class="kit"><div class="sw" style="background:${BANDS[b].colour}"></div>
+      <div><div class="t">${BANDS[b].label}</div><div class="d">${notes}</div>
+      <div class="u">${list.map(e=>e.name).join(' &middot; ')}</div></div></div>`;
+  }).join('');
+
+  say('Get your kit ready. ' + Object.keys(used).map(b=>BANDS[b].label).join(' and ') + '.');
+
+  app.innerHTML = topbar('Before you start','Leave') + `
+    <div class="scroll">
+      <h1>Get the kit ready</h1>
+      <div class="card">${kit}
+        <div class="kit"><div class="sw" style="background:var(--line)"></div>
+          <div><div class="t">Phone</div><div class="d">Prop it where you can see it. The screen will stay awake.</div></div></div>
+      </div>
+    </div>
+    <button class="big" onclick="next()">All set</button>`;
+}
+
+/* ---------- between exercises ---------- */
+function screenIntro(st){
+  const e=EXERCISES[st.id];
+  const reps = typeof e.reps==='number'
+    ? `${e.sets} sets of ${e.reps}${e.perSide?' each leg':''}` : `${e.sets} sets, ${e.reps}`;
+
+  say((st.first?'':'Next. ') + e.name + '. ' + (e.band ? BANDS[e.band].label+'. '+e.bandNote+'.' : ''));
+
+  app.innerHTML = topbar(`${st.n} of ${st.total}`,'Leave') + `
+    <div class="scroll">
+      <p class="kicker">${st.first?'First exercise':'Ready when you are'}</p>
+      <h1>${e.name}</h1>
+      <p class="clinical">${e.clinical}</p>
+      ${e.band?`<div class="card" style="border-color:${BANDS[e.band].colour}">
+        <p class="kicker" style="color:${BANDS[e.band].colour}">Band</p>
+        <div style="font-size:19px;font-weight:700">${BANDS[e.band].label}</div>
+        <div class="big-note">${e.bandNote}</div></div>`:''}
+      <div class="card"><p class="kicker">${reps} &middot; ${e.tempo}</p>
+        <ol class="steps">${e.steps.map(s=>`<li>${s}</li>`).join('')}</ol></div>
+      ${e.note?`<div class="card"><p class="kicker">Note</p><div class="big-note">${e.note}</div></div>`:''}
+    </div>
+    <button class="big" onclick="next()">Start ${e.name.toLowerCase()}</button>
+    <button class="sec" onclick="skipExercise()">Skip this exercise</button>`;
+}
+
+function skipExercise(){
+  const id=steps[idx].id; let i=idx+1;
+  while(i<steps.length && steps[i].id===id) i++;
+  go(i);
+}
+
+/* ---------- a working set ---------- */
+function screenSet(st){
+  const e=EXERCISES[st.id];
+  const spoken = `${e.name}. Set ${st.setNo} of ${e.sets}. `
+    + (st.side ? `Standing on your ${st.side} leg. ` : '')
+    + e.say;
+  say(spoken);
+
+  app.innerHTML = topbar(`${st.n} of ${st.total}`,'Leave') + `
+    <div class="scroll">
+      <h2>${e.name}</h2>
+      <p class="clinical">${e.clinical}</p>
+      ${st.side?`<div class="side">Working leg</div><div class="sideval">${st.side.toUpperCase()}</div>`:''}
+      <div class="metrics">
+        <div class="metric"><div class="k">Set</div><div class="v">${st.setNo} / ${e.sets}</div></div>
+        <div class="metric"><div class="k">Reps</div><div class="v">${e.reps}</div></div>
+      </div>
+      ${e.override?`<div class="ovr"><p class="kicker">Physio override</p>
+        <h3>${e.override.title}</h3><p>${e.override.body}</p>
+        <div class="stock"><p class="kicker">Stock instruction &mdash; do not follow</p>
+        <s>${e.override.stock}</s></div></div>`:''}
+      <div class="card"><p class="kicker">${e.tempo}</p>
+        <ol class="steps">${e.steps.map(s=>`<li>${s}</li>`).join('')}</ol></div>
+    </div>
+    <button class="big" onclick="next()">Set done<small>tap when you have finished all ${e.reps}</small></button>`;
+}
+
+/* ---------- B1 block ---------- */
+function screenBlock(st){
+  const e=EXERCISES[st.id];
+  const dir=e.blocks[st.blockNo];
+  const last=st.blockNo===e.blocks.length-1;
+  const colour = st.side==='Left' ? 'var(--rest)' : 'var(--go)';
+  const ink    = st.side==='Left' ? '#06121f' : '#07120c';
+
+  say((st.blockNo===0 ? `${st.side} foot. ` : '') + dir + '. Eight reps.');
+
+  app.innerHTML = topbar(`${st.n} of ${st.total}`,'Leave') + `
+    <div class="scroll">
+      <h2>${e.name}</h2>
+      <p class="clinical">Set ${st.setNo} of ${e.sets} &middot; ${e.tempo}</p>
+      <div class="footbar" style="background:${colour};color:${ink}">
+        ${st.side.toUpperCase()} FOOT MOVING
+      </div>
+      ${e.blocks.map((b,i)=>`
+        <div class="blk ${i===st.blockNo?'now':(i<st.blockNo?'done':'')}">
+          <div class="tick">${i<st.blockNo?'&check;':(i===st.blockNo?'&rarr;':'')}</div>
+          <div style="flex:1">${b}</div>
+          <div style="color:var(--dim)">8</div>
+        </div>`).join('')}
+      <div class="card"><div class="big-note">Only the ${st.side.toLowerCase()} foot moves. The other stays planted. Keep tension on the band throughout.</div></div>
+    </div>
+    <button class="big" onclick="next()">Done &mdash; 8 ${dir.toLowerCase()}
+      <small>${last ? (nextBlockLabel()) : 'next: '+e.blocks[st.blockNo+1].toLowerCase()}</small></button>`;
+}
+function nextBlockLabel(){
+  const n=steps[idx+1];
+  if(!n) return 'finished';
+  if(n.type==='block') return `next: ${n.side.toLowerCase()} foot`;
+  if(n.type==='rest') return 'next: rest';
+  return 'exercise finished';
+}
+
+/* ---------- rest ---------- */
+function screenRest(st){
+  let left=CONFIG.restSeconds;
+  const R=100, C=2*Math.PI*R;
+  say('Rest. Up next, ' + st.next + '.');
+
+  const paint=()=>{
+    const frac=left/CONFIG.restSeconds;
+    app.innerHTML = topbar('Rest','Leave') + `
+      <div class="scroll" style="display:flex;flex-direction:column;justify-content:center">
+        <div class="ringwrap">
+          <svg width="212" height="212" viewBox="0 0 240 240">
+            <circle cx="120" cy="120" r="${R}" fill="none" stroke="var(--line)" stroke-width="15"/>
+            <circle cx="120" cy="120" r="${R}" fill="none" stroke="var(--rest)" stroke-width="15"
+              stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}"
+              stroke-dashoffset="${(C*(1-frac)).toFixed(1)}"/>
+          </svg>
+          <div class="ringtxt"><div class="n">${left}</div><div class="l">Resting</div></div>
+        </div>
+        <div class="card" style="text-align:center">
+          <p class="kicker">Up next</p>
+          <div style="font-size:19px;font-weight:700">${st.next}</div>
+        </div>
+      </div>
+      <button class="sec" onclick="skipRest()">Skip the rest</button>`;
+  };
+  paint();
+  clearInterval(timer);
+  timer=setInterval(()=>{
+    left--;
+    if(left<=0){ clearInterval(timer); next(); return; }
+    paint();
+  },1000);
+}
+function skipRest(){ clearInterval(timer); next(); }
+
+/* ---------- swap sides ---------- */
+function screenSwap(st){
+  const e=EXERCISES[st.id];
+  say(`Swap sides. Move the band to your ${st.to} leg. Take your time.`);
+  app.innerHTML = topbar('Swap sides','Leave') + `
+    <div class="scroll">
+      <p class="kicker">That leg is finished</p>
+      <h1>Swap to your ${st.to.toLowerCase()} leg</h1>
+      <p class="lede">No timer running. Re-anchor the band and turn round so the door is on your other side.</p>
+      ${e.band?`<div class="card" style="border-color:${BANDS[e.band].colour}">
+        <p class="kicker" style="color:${BANDS[e.band].colour}">${BANDS[e.band].label}</p>
+        <div class="big-note">${e.bandNote}</div></div>`:''}
+    </div>
+    <button class="big" onclick="next()">Ready &mdash; ${st.to.toLowerCase()} leg</button>`;
+}
+
+/* ---------- finish ---------- */
+function screenFinish(){
+  const mins = startedAt ? Math.max(1, Math.round((Date.now()-startedAt)/60000)) : null;
+  say('That is ' + SESSIONS[sessionKey].title + ' finished.');
+  LS.set('last', {key:sessionKey, at:Date.now()});
+
+  app.innerHTML = topbar('Done','') + `
+    <div class="scroll">
+      <h1>That&rsquo;s ${SESSIONS[sessionKey].title} finished.</h1>
+      <p class="lede">${mins?mins+' minutes. ':''}${nextSessionText()}.</p>
+      <div class="card">
+        <p class="kicker">Optional</p>
+        <div style="font-size:19px;font-weight:700;margin-bottom:8px">
+          Massage gun &middot; ${CONFIG.massageMinutesPerLeg} minutes a leg</div>
+        <div class="big-note" style="color:var(--stop);font-weight:600;margin-bottom:5px">
+          ${CONFIG.massageAvoid}</div>
+        <div class="big-note">${CONFIG.massageOk} Wherever feels worked.</div>
+      </div>
+    </div>
+    <button class="big blue" onclick="massage('${CONFIG.leadingLeg}')">Start ${CONFIG.leadingLeg.toLowerCase()} leg</button>
+    <button class="sec" onclick="endAll()">No thanks &mdash; I&rsquo;m done</button>`;
+}
+function endAll(){
+  clearInterval(timer); speechSynthesis.cancel();
+  steps=[]; idx=0; sessionKey=null; render();
+}
+
+/* ---------- massage ---------- */
+function massage(leg){
+  let left=CONFIG.massageMinutesPerLeg*60;
+  const total=left, R=100, C=2*Math.PI*R;
+  say(`Massage. ${leg} leg. ${CONFIG.massageMinutesPerLeg} minutes. Stay off the side of your hip and your glutes.`);
+  const other=otherLeg(leg);
+  const paint=()=>{
+    const m=Math.floor(left/60), s=String(left%60).padStart(2,'0');
+    app.innerHTML = topbar('Massage','Leave') + `
+      <div class="scroll" style="display:flex;flex-direction:column;justify-content:center">
+        <div class="ringwrap">
+          <svg width="212" height="212" viewBox="0 0 240 240">
+            <circle cx="120" cy="120" r="${R}" fill="none" stroke="var(--line)" stroke-width="15"/>
+            <circle cx="120" cy="120" r="${R}" fill="none" stroke="var(--warn)" stroke-width="15"
+              stroke-linecap="round" stroke-dasharray="${C.toFixed(1)}"
+              stroke-dashoffset="${(C*(1-left/total)).toFixed(1)}"/>
+          </svg>
+          <div class="ringtxt"><div class="n" style="font-size:46px">${m}:${s}</div>
+            <div class="l">${leg} leg</div></div>
+        </div>
+        <div class="card"><div class="big-note" style="color:var(--stop);font-weight:600">
+          ${CONFIG.massageAvoid}</div>
+          <div class="big-note" style="margin-top:6px">${CONFIG.massageOk}</div></div>
+      </div>
+      ${leg===CONFIG.leadingLeg
+        ? `<button class="sec" onclick="massage('${other}')">Skip to ${other.toLowerCase()} leg</button>`
+        : `<button class="sec" onclick="endAll()">Finish</button>`}`;
+  };
+  paint();
+  clearInterval(timer);
+  timer=setInterval(()=>{
+    left--;
+    if(left<=0){
+      clearInterval(timer);
+      if(leg===CONFIG.leadingLeg){ massage(other); }
+      else { say('All done.'); endAll(); }
+      return;
+    }
+    paint();
+  },1000);
+}
+
+/* ---------- settings ---------- */
+function screenSettings(){
+  loadVoices();
+  const cur=LS.get('voice',CONFIG.defaultVoice);
+  const en=voices.filter(v=>(v.lang||'').toLowerCase().startsWith('en'))
+                 .sort((a,b)=>a.name.localeCompare(b.name));
+  app.innerHTML = topbar('Settings','') + `
+    <div class="scroll">
+      <h1>Settings</h1>
+      <div class="card">
+        <p class="kicker">Voice</p>
+        <select id="v">${en.map(v=>
+          `<option value="${v.name}" ${v.name===cur?'selected':''}>${v.name} &mdash; ${v.lang}</option>`
+        ).join('') || '<option>No voices found</option>'}</select>
+        <div class="rng"><span>Speed</span>
+          <input type="range" id="r" min="0.7" max="1.3" step="0.05" value="${LS.get('rate',1)}">
+          <span id="rv">${Number(LS.get('rate',1)).toFixed(2)}</span></div>
+        <button class="sec" onclick="say('Single leg mini squats. Set one of three. Standing on your left leg.')">
+          Test the voice</button>
+      </div>
+      <div class="card">
+        <p class="kicker">Speech</p>
+        <button class="sec" onclick="LS.set('speech',!LS.get('speech',true));screenSettings()">
+          ${LS.get('speech',true)?'Voice is ON &mdash; turn off':'Voice is OFF &mdash; turn on'}</button>
+        <div class="big-note" style="margin-top:9px">Every spoken cue is also the largest text on screen, so the app works without it.</div>
+      </div>
+      <div class="card">
+        <p class="kicker">Programme</p>
+        <div class="big-note">Rehab A on Monday and Thursday, Rehab B on Tuesday and Saturday.
+        All sets on one leg before swapping. ${CONFIG.leadingLeg} leg leads.</div>
+      </div>
+    </div>
+    <button class="big" onclick="render()">Done</button>`;
+  document.getElementById('v').onchange=e=>{ LS.set('voice',e.target.value);
+    say('This is how I will sound.'); };
+  const r=document.getElementById('r');
+  r.oninput=e=>{ document.getElementById('rv').textContent=Number(e.target.value).toFixed(2); };
+  r.onchange=e=>{ LS.set('rate',parseFloat(e.target.value)); say('Twelve reps, quarter depth.'); };
+}
+
+/* =================== router =================== */
+function render(){
+  clearInterval(timer);
+  if(!steps.length){ screenToday(); return; }
+  const st=steps[idx];
+  if(!st){ screenToday(); return; }
+  ({ setup:screenSetup, intro:screenIntro, set:screenSet, block:screenBlock,
+     rest:screenRest, swap:screenSwap, finish:screenFinish })[st.type](st);
+}
+
+/* settings is reachable from the top bar when idle */
+const _quit=quit;
+window.quit=()=>{ if(!steps.length){ screenSettings(); } else { _quit(); } };
+
+if('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(()=>{});
+render();
 </script>
 </body>
 </html>
