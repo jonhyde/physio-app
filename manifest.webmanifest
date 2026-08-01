@@ -1,6 +1,6 @@
 {
-  "name": "Rehab",
-  "short_name": "Rehab",
+  "name": "Physio",
+  "short_name": "Physio",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

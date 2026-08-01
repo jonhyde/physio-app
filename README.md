@@ -1,10 +1,10 @@
-# rehab-timer
+# physio-app
 
 A personal GTPS rehab app, served as an offline home-screen web app.
 
 No build step, no framework, no dependencies. Static files only.
 
-**Live at:** https://jonhyde.github.io/rehab-timer/
+**Live at:** https://jonhyde.github.io/physio-app/
 
 | File | Purpose |
 |---|---|
