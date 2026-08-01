@@ -1,6 +1,6 @@
 /* Cache-first service worker. Bump CACHE when files change. */
-const CACHE = 'rehab-v1';
-const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
+const CACHE = 'rehab-v2';
+const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg', './voices.html'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(ASSETS)).then(() => self.skipWaiting()));
