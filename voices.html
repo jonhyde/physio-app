@@ -43,6 +43,13 @@
 <p class="sub">Download more voices first: Settings &rsaquo; Accessibility &rsaquo; Spoken Content &rsaquo; Voices &rsaquo; English (UK). Choose <b>Enhanced</b> or <b>Premium</b>, not Compact. Then reload this page.</p>
 
 <div class="card">
+  <label>Your shortlist</label>
+  <div id="short"></div>
+  <button id="ab">Compare all three, back to back</button>
+  <button id="refresh" class="sec">Voices missing? Refresh</button>
+</div>
+
+<div class="card">
   <label>Available voices <span class="count" id="n"></span></label>
   <div class="filter">
     <button id="fGB" class="on">UK only</button>
@@ -83,13 +90,70 @@ const CUES=[
   'Band change. Fabric loop above the knees.',
   'That is Rehab B finished.'
 ];
+const SHORTLIST=['Jamie','Kate','Stephanie'];
+const AB_LINE='Single leg mini squats. Set one of three. Standing on your right leg. Twelve small squats. Push out against the band the whole time.';
 let all=[], filter='GB';
 
 function load(){
   all=speechSynthesis.getVoices();
   if(!all.length) return;
   render();
+  renderShort();
 }
+
+function findVoice(name){
+  return all.find(v=>v.name===name)
+      || all.find(v=>v.name.toLowerCase().startsWith(name.toLowerCase()));
+}
+
+function renderShort(){
+  $('short').innerHTML = SHORTLIST.map(n=>{
+    const v=findVoice(n);
+    return v
+      ? `<div class="cue"><p><b>${v.name}</b><br><span style="color:var(--muted);font-size:12px">${v.lang}${v.localService?'':' · network'}</span></p>
+         <button data-v="${v.name}">Play</button></div>`
+      : `<div class="cue"><p><b>${n}</b><br><span style="color:#ff6b6b;font-size:12px">not visible to Safari</span></p></div>`;
+  }).join('');
+}
+
+$('short').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-v]');
+  if(!b) return;
+  const v=findVoice(b.dataset.v);
+  if(v){ $('voice').value=v.name; update(); }
+  speakAs(v, AB_LINE);
+});
+
+function speakAs(v,text){
+  speechSynthesis.cancel();
+  const u=new SpeechSynthesisUtterance(text);
+  if(v){u.voice=v;u.lang=v.lang;} else u.lang='en-GB';
+  u.rate=parseFloat($('rate').value);
+  u.pitch=parseFloat($('pitch').value);
+  speechSynthesis.speak(u);
+}
+
+$('ab').onclick=async()=>{
+  const found=SHORTLIST.map(findVoice).filter(Boolean);
+  if(!found.length){alert('None of the three are visible to Safari.');return;}
+  $('ab').disabled=true;
+  for(const v of found){
+    speakAs(v,`${v.name}. ${AB_LINE}`);
+    await new Promise(r=>{
+      const t=setInterval(()=>{ if(!speechSynthesis.speaking){clearInterval(t);setTimeout(r,700);} },200);
+      setTimeout(()=>{clearInterval(t);r();},15000);
+    });
+  }
+  $('ab').disabled=false;
+};
+
+$('refresh').onclick=()=>{
+  speechSynthesis.cancel();
+  all=speechSynthesis.getVoices();
+  render(); renderShort();
+  $('refresh').textContent=`Refreshed — ${all.length} voices`;
+  setTimeout(()=>$('refresh').textContent='Voices missing? Refresh',1800);
+};
 function render(){
   let list=all;
   if(filter==='GB') list=all.filter(v=>(v.lang||'').toLowerCase().startsWith('en-gb'));

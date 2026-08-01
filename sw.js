@@ -1,5 +1,5 @@
 /* Cache-first service worker. Bump CACHE when files change. */
-const CACHE = 'rehab-v2';
+const CACHE = 'rehab-v3';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg', './voices.html'];
 
 self.addEventListener('install', e => {
