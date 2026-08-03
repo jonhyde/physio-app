@@ -166,7 +166,7 @@ const SESSIONS = {
 const WEEK = { 0:null, 1:'A', 2:'B', 3:null, 4:'A', 5:null, 6:'B' };
 
 const CONFIG = {
-  restSeconds: 30,
+  restSeconds: 15,
   massageMinutesPerLeg: 3,
   leadingLeg: 'Left',        // more symptomatic side goes first
   defaultVoice: 'Samantha',

@@ -86,6 +86,10 @@
   .cue{font-size:17px;color:var(--ink);margin:0 0 8px}
   .steps{margin:0;padding-left:19px;color:var(--muted);font-size:14.5px}
   .steps li{margin-bottom:5px}
+  .tappable{cursor:pointer}
+  .tappable:active{background:var(--panel2)}
+  .readme{margin:11px 0 0;padding-top:10px;border-top:1px solid var(--line);
+          font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
 
   /* override */
   .ovr{border:1px solid var(--warn);background:rgba(255,200,87,.09);
@@ -165,6 +169,9 @@ function chosenVoice(){
       || voices.find(v=>(v.lang||'').toLowerCase().startsWith('en'))
       || null;
 }
+/* The voice is deliberately sparse. Jon is holding the phone and reading it,
+   and anything spoken competes with the podcast he is listening to.
+   Speak only what he cannot see, or has asked to hear. */
 function say(text){
   if(!text || !LS.get('speech',true)) return;
   try{
@@ -173,8 +180,18 @@ function say(text){
     const v=chosenVoice();
     if(v){ u.voice=v; u.lang=v.lang; } else u.lang='en-GB';
     u.rate=LS.get('rate',1); u.pitch=1;
+    u.volume=LS.get('volume',1);
     speechSynthesis.speak(u);
   }catch(e){}
+}
+/* Read the instructions aloud, on request only. */
+function readSteps(id){
+  const e=EXERCISES[id];
+  speechSynthesis.cancel();
+  const bits=[e.name];
+  if(e.override) bits.push('Important. ' + e.override.title + '. ' + e.override.body);
+  bits.push(...e.steps);
+  say(bits.join(' '));
 }
 
 /* =================== wake lock =================== */
@@ -357,7 +374,7 @@ function screenSetup(st){
     `<div class="kit"><div class="sw" style="background:${BANDS[b].colour}"></div>
      <div class="t">${BANDS[b].label}</div></div>`).join('');
 
-  say('Get your kit ready. ' + labels.join(' and ') + '.');
+  /* Silent. He is looking at the screen and already has the kit. */
 
   app.innerHTML = topbar('Before you start','Leave') + `
     <div class="scroll">
@@ -377,7 +394,11 @@ function screenIntro(st){
   const reps = typeof e.reps==='number'
     ? `${e.sets} sets of ${e.reps}${e.perSide?' each leg':''}` : `${e.sets} sets, ${e.reps}`;
 
-  say((st.first?'':'Next. ') + e.name + '. ' + (e.band ? BANDS[e.band].label+'. '+e.bandNote+'.' : ''));
+  /* The ONLY place the exercise name is spoken, plus where the band goes.
+     Nothing else. Instructions are read only if he taps them.
+     Lower-cased because shouty capitals make some voices spell words out. */
+  say(e.name + '. ' + (e.band
+        ? BANDS[e.band].label + ', ' + e.bandNote.toLowerCase() + '.' : ''));
 
   app.innerHTML = topbar(`${st.n} of ${st.total}`,'Leave') + `
     <div class="scroll">
@@ -388,8 +409,10 @@ function screenIntro(st){
         <p class="kicker" style="color:${BANDS[e.band].colour}">Band</p>
         <div style="font-size:19px;font-weight:700">${BANDS[e.band].label}</div>
         <div class="big-note">${e.bandNote}</div></div>`:''}
-      <div class="card"><p class="kicker">${reps} &middot; ${e.tempo}</p>
-        <ol class="steps">${e.steps.map(s=>`<li>${s}</li>`).join('')}</ol></div>
+      <div class="card tappable" onclick="readSteps('${st.id}')">
+        <p class="kicker">${reps} &middot; ${e.tempo}</p>
+        <ol class="steps">${e.steps.map(s=>`<li>${s}</li>`).join('')}</ol>
+        <p class="readme">Tap to read aloud</p></div>
       ${e.note?`<div class="card"><p class="kicker">Note</p><div class="big-note">${e.note}</div></div>`:''}
     </div>
     <button class="big" onclick="next()">Start ${e.name.toLowerCase()}</button>
@@ -405,10 +428,8 @@ function skipExercise(){
 /* ---------- a working set ---------- */
 function screenSet(st){
   const e=EXERCISES[st.id];
-  const spoken = `${e.name}. Set ${st.setNo} of ${e.sets}. `
-    + (st.side ? `Standing on your ${st.side} leg. ` : '')
-    + e.say;
-  say(spoken);
+  /* Just the set number, and the side if there is one. Nothing else. */
+  say((st.side ? `${st.side} side. ` : '') + `Set ${st.setNo} of ${e.sets}.`);
 
   app.innerHTML = topbar(`${st.n} of ${st.total}`,'Leave') + `
     <div class="scroll">
@@ -423,8 +444,10 @@ function screenSet(st){
         <h3>${e.override.title}</h3><p>${e.override.body}</p>
         <div class="stock"><p class="kicker">Stock instruction &mdash; do not follow</p>
         <s>${e.override.stock}</s></div></div>`:''}
-      <div class="card"><p class="kicker">${e.tempo}</p>
-        <ol class="steps">${e.steps.map(s=>`<li>${s}</li>`).join('')}</ol></div>
+      <div class="card tappable" onclick="readSteps('${st.id}')">
+        <p class="kicker">${e.tempo}</p>
+        <ol class="steps">${e.steps.map(s=>`<li>${s}</li>`).join('')}</ol>
+        <p class="readme">Tap to read aloud</p></div>
     </div>
     <button class="big" onclick="next()">Set done<small>tap when you have finished all ${e.reps}</small></button>`;
 }
@@ -437,7 +460,8 @@ function screenBlock(st){
   const colour = st.side==='Left' ? 'var(--rest)' : 'var(--go)';
   const ink    = st.side==='Left' ? '#06121f' : '#07120c';
 
-  say((st.blockNo===0 ? `${st.side} foot. ` : '') + dir + '. Eight reps.');
+  /* Short. The direction is the one thing that changes and is easy to lose. */
+  say((st.blockNo===0 ? `${st.side} foot. ` : '') + dir + '.');
 
   app.innerHTML = topbar(`${st.n} of ${st.total}`,'Leave') + `
     <div class="scroll">
@@ -469,7 +493,7 @@ function nextBlockLabel(){
 function screenRest(st){
   let left=CONFIG.restSeconds;
   const R=100, C=2*Math.PI*R;
-  say('Rest. Up next, ' + st.next + '.');
+  /* Silent. The countdown is on screen and he is looking at it. */
 
   const paint=()=>{
     const frac=left/CONFIG.restSeconds;
@@ -504,7 +528,7 @@ function skipRest(){ clearInterval(timer); next(); }
 /* ---------- swap sides ---------- */
 function screenSwap(st){
   const e=EXERCISES[st.id];
-  say(`Swap sides. Move the band to your ${st.to} leg. Take your time.`);
+  say(`Swap to your ${st.to.toLowerCase()} leg.`);
   app.innerHTML = topbar('Swap sides','Leave') + `
     <div class="scroll">
       <p class="kicker">That leg is finished</p>
@@ -520,7 +544,7 @@ function screenSwap(st){
 /* ---------- finish ---------- */
 function screenFinish(){
   const mins = startedAt ? Math.max(1, Math.round((Date.now()-startedAt)/60000)) : null;
-  say('That is ' + SESSIONS[sessionKey].title + ' finished.');
+  say('Finished.');
   LS.set('last', {key:sessionKey, at:Date.now()});
 
   app.innerHTML = topbar('Done','') + `
@@ -548,7 +572,7 @@ function endAll(){
 function massage(leg){
   let left=CONFIG.massageMinutesPerLeg*60;
   const total=left, R=100, C=2*Math.PI*R;
-  say(`Massage. ${leg} leg. ${CONFIG.massageMinutesPerLeg} minutes. Stay off the side of your hip and your glutes.`);
+  say(`${leg} leg.`);   /* the avoid warning is on screen in red */
   const other=otherLeg(leg);
   const paint=()=>{
     const m=Math.floor(left/60), s=String(left%60).padStart(2,'0');
@@ -600,17 +624,21 @@ function screenSettings(){
         <select id="v">${en.map(v=>
           `<option value="${v.name}" ${v.name===cur?'selected':''}>${v.name} &mdash; ${v.lang}</option>`
         ).join('') || '<option>No voices found</option>'}</select>
+        <div class="rng"><span>Volume</span>
+          <input type="range" id="vol" min="0.1" max="1" step="0.05" value="${LS.get('volume',1)}">
+          <span id="volv">${Math.round(LS.get('volume',1)*100)}%</span></div>
         <div class="rng"><span>Speed</span>
           <input type="range" id="r" min="0.7" max="1.3" step="0.05" value="${LS.get('rate',1)}">
           <span id="rv">${Number(LS.get('rate',1)).toFixed(2)}</span></div>
-        <button class="sec" onclick="say('Single leg mini squats. Set one of three. Standing on your left leg.')">
-          Test the voice</button>
+        <button class="sec" onclick="say('Left side. Set one of three.')">Test the voice</button>
       </div>
       <div class="card">
         <p class="kicker">Speech</p>
         <button class="sec" onclick="LS.set('speech',!LS.get('speech',true));screenSettings()">
           ${LS.get('speech',true)?'Voice is ON &mdash; turn off':'Voice is OFF &mdash; turn on'}</button>
-        <div class="big-note" style="margin-top:9px">Every spoken cue is also the largest text on screen, so the app works without it.</div>
+        <div class="big-note" style="margin-top:9px">
+          The voice only announces the set number, the side, and the exercise name once at the start.
+          Everything else is on screen. Tap the instructions during an exercise to have them read aloud.</div>
       </div>
       <div class="card">
         <p class="kicker">Programme</p>
@@ -620,10 +648,13 @@ function screenSettings(){
     </div>
     <button class="big" onclick="render()">Done</button>`;
   document.getElementById('v').onchange=e=>{ LS.set('voice',e.target.value);
-    say('This is how I will sound.'); };
+    say('Left side. Set one of three.'); };
   const r=document.getElementById('r');
   r.oninput=e=>{ document.getElementById('rv').textContent=Number(e.target.value).toFixed(2); };
-  r.onchange=e=>{ LS.set('rate',parseFloat(e.target.value)); say('Twelve reps, quarter depth.'); };
+  r.onchange=e=>{ LS.set('rate',parseFloat(e.target.value)); say('Set two of three.'); };
+  const vol=document.getElementById('vol');
+  vol.oninput=e=>{ document.getElementById('volv').textContent=Math.round(e.target.value*100)+'%'; };
+  vol.onchange=e=>{ LS.set('volume',parseFloat(e.target.value)); say('Set two of three.'); };
 }
 
 /* =================== router =================== */
