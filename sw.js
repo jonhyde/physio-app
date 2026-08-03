@@ -1,6 +1,6 @@
 /* Cache-first service worker.
    BUMP THE VERSION whenever any cached file changes, or devices keep the old copy. */
-const CACHE = 'physio-v7';
+const CACHE = 'physio-v8';
 const ASSETS = [
   './', './index.html', './programme.js',
   './manifest.webmanifest', './icon.svg',
