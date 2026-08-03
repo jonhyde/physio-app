@@ -3,12 +3,12 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Physio</title>
+<title>Rehab</title>
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Physio">
+<meta name="apple-mobile-web-app-title" content="Rehab">
 <meta name="theme-color" content="#0d1117">
 <meta name="robots" content="noindex, nofollow">
 <link rel="apple-touch-icon" href="icon.svg">
@@ -28,12 +28,13 @@
   }
   #app{
     height:100%;display:flex;flex-direction:column;
-    padding:max(14px,env(safe-area-inset-top)) 16px max(16px,env(safe-area-inset-bottom));
+    padding:calc(env(safe-area-inset-top) + 16px) 18px calc(env(safe-area-inset-bottom) + 14px);
   }
   .scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch}
-  .bar{display:flex;justify-content:space-between;align-items:center;
-       font-size:12.5px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase;
-       padding-bottom:10px;flex:none}
+  .bar{display:flex;justify-content:space-between;align-items:center;gap:12px;
+       font-size:12px;color:var(--dim);letter-spacing:.06em;text-transform:uppercase;
+       padding-bottom:16px;flex:none;min-height:20px}
+  .bar b{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .bar b{color:var(--muted);font-weight:600}
   .bar button{background:none;border:0;color:var(--dim);font-size:12.5px;
               text-transform:uppercase;letter-spacing:.06em;padding:4px 0}
@@ -110,12 +111,16 @@
   .footbar{border-radius:12px;padding:12px 14px;margin-bottom:12px;font-weight:700;
            font-size:15px;letter-spacing:.02em}
 
-  .kit{display:flex;gap:12px;align-items:flex-start;padding:13px 0;border-bottom:1px solid var(--line)}
+  .kit{display:flex;gap:14px;align-items:center;padding:18px 0;border-bottom:1px solid var(--line)}
   .kit:last-child{border:0}
-  .kit .sw{width:11px;height:38px;border-radius:4px;flex:none;margin-top:2px}
-  .kit .t{font-weight:700;font-size:15.5px}
+  .kit .sw{width:11px;height:30px;border-radius:4px;flex:none}
+  .kit .t{font-weight:700;font-size:20px}
   .kit .d{color:var(--muted);font-size:14px}
-  .kit .u{color:var(--dim);font-size:11px;letter-spacing:.08em;text-transform:uppercase;margin-top:3px}
+
+  /* extra breathing room where a screen is sparse */
+  .roomy{padding-top:14px}
+  .roomy h1{margin-bottom:8px}
+  .roomy .lede{margin-bottom:22px}
 
   .chk{display:flex;align-items:center;gap:13px;padding:15px 0;border-bottom:1px solid var(--line)}
   .chk:last-of-type{border:0}
@@ -333,26 +338,26 @@ function quit(){
   }
 }
 
-/* ---------- setup ---------- */
+/* ---------- setup ----------
+   Deliberately minimal. Placement is shown at the start of each exercise,
+   which is when it is actually needed, so it is not repeated here. */
 function screenSetup(st){
-  const used={};
-  st.order.forEach(id=>{ const e=EXERCISES[id]; if(e.band){ (used[e.band]=used[e.band]||[]).push(e); } });
+  const used=[...new Set(st.order.map(id=>EXERCISES[id].band).filter(Boolean))];
+  const labels=used.map(b=>BANDS[b].label);
 
-  const kit=Object.entries(used).map(([b,list])=>{
-    const notes=[...new Set(list.map(e=>e.bandNote))].join('. ');
-    return `<div class="kit"><div class="sw" style="background:${BANDS[b].colour}"></div>
-      <div><div class="t">${BANDS[b].label}</div><div class="d">${notes}</div>
-      <div class="u">${list.map(e=>e.name).join(' &middot; ')}</div></div></div>`;
-  }).join('');
+  const kit=used.map(b=>
+    `<div class="kit"><div class="sw" style="background:${BANDS[b].colour}"></div>
+     <div class="t">${BANDS[b].label}</div></div>`).join('');
 
-  say('Get your kit ready. ' + Object.keys(used).map(b=>BANDS[b].label).join(' and ') + '.');
+  say('Get your kit ready. ' + labels.join(' and ') + '.');
 
   app.innerHTML = topbar('Before you start','Leave') + `
     <div class="scroll">
-      <h1>Get the kit ready</h1>
-      <div class="card">${kit}
-        <div class="kit"><div class="sw" style="background:var(--line)"></div>
-          <div><div class="t">Phone</div><div class="d">Prop it where you can see it. The screen will stay awake.</div></div></div>
+      <div class="roomy">
+        <h1>Get the kit ready</h1>
+        <p class="lede">You will be told where each band goes when you get to it.</p>
+        <div class="card">${kit}</div>
+        <p class="big-note" style="margin-top:16px">Prop the phone where you can see it. The screen will stay awake.</p>
       </div>
     </div>
     <button class="big" onclick="next()">All set</button>`;
