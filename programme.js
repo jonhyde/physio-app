@@ -107,15 +107,10 @@ const EXERCISES = {
     sets: 3, reps: 10, perSide: false,
     tempo: 'Controlled',
     say: 'Squats. Ten reps. Shallow only. No deeper than a Pilates squat.',
-    override: {
-      title: 'Shallow only',
-      body: 'Go down no further than a Pilates squat. Deeper squeezes the sore tendon against the bone, which is exactly what the shockwave is treating.',
-      stock: 'Bend down into a full depth squat.'
-    },
     steps: [
       'Fabric loop around your thighs, just above your knees.',
       'Feet shoulder width apart, arms folded across your chest, chest tall.',
-      'Sit down only as far as a Pilates squat.',
+      'Sit down no further than a Pilates squat. Going deeper squeezes the sore tendon against the bone, which is what the shockwave is treating.',
       'Push your knees outwards against the band as you go.',
       'Drive up through your heels to stand.'
     ]

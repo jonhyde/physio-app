@@ -17,8 +17,8 @@ No build step, no framework, no dependencies. Static files only.
 
 ## Changing the programme
 
-Edit `programme.js` only. Exercise names, reps, sets, instructions, bands,
-overrides and the weekday map are all there. Then **bump `CACHE` in `sw.js`**
+Edit `programme.js` only. Exercise names, reps, sets, instructions, bands and
+the weekday map are all there. Then **bump `CACHE` in `sw.js`**
 or devices will keep serving the old version.
 
 ## Design

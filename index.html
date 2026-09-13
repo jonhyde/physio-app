@@ -91,16 +91,6 @@
   .readme{margin:11px 0 0;padding-top:10px;border-top:1px solid var(--line);
           font-size:11.5px;letter-spacing:.09em;text-transform:uppercase;color:var(--dim)}
 
-  /* override */
-  .ovr{border:1px solid var(--warn);background:rgba(255,200,87,.09);
-       border-radius:14px;padding:14px;margin-bottom:10px}
-  .ovr .kicker{color:var(--warn)}
-  .ovr h3{margin:0 0 6px;font-size:21px;color:var(--warn)}
-  .ovr p{margin:0;font-size:15px;color:var(--ink)}
-  .stock{margin-top:11px;padding-top:11px;border-top:1px solid rgba(255,200,87,.25)}
-  .stock .kicker{color:var(--dim)}
-  .stock s{color:var(--dim);font-size:14px}
-
   /* rest ring */
   .ringwrap{position:relative;width:212px;height:212px;margin:6px auto 14px}
   .ringwrap svg{transform:rotate(-90deg)}
@@ -189,7 +179,6 @@ function readSteps(id){
   const e=EXERCISES[id];
   speechSynthesis.cancel();
   const bits=[e.name];
-  if(e.override) bits.push('Important. ' + e.override.title + '. ' + e.override.body);
   bits.push(...e.steps);
   say(bits.join(' '));
 }
@@ -215,7 +204,7 @@ function buildSteps(order){
   const out=[{type:'setup', order}];
   order.forEach((id,i)=>{
     const ex=EXERCISES[id];
-    out.push({type:'intro', id, first:i===0, n:i+1, total:order.length});
+    const firstWorkStep=out.length;
 
     if(ex.perSide && ex.groupBySide){
       const legs=[CONFIG.leadingLeg, otherLeg(CONFIG.leadingLeg)];
@@ -244,6 +233,7 @@ function buildSteps(order){
         if(s<ex.sets) out.push({type:'rest', id, next:`Set ${s+1} of ${ex.sets}`});
       }
     }
+    out[firstWorkStep].exerciseStart=true;
   });
   out.push({type:'finish'});
   return out;
@@ -388,48 +378,13 @@ function screenSetup(st){
     <button class="big" onclick="next()">All set</button>`;
 }
 
-/* ---------- between exercises ---------- */
-function screenIntro(st){
-  const e=EXERCISES[st.id];
-  const reps = typeof e.reps==='number'
-    ? `${e.sets} sets of ${e.reps}${e.perSide?' each leg':''}` : `${e.sets} sets, ${e.reps}`;
-
-  /* The ONLY place the exercise name is spoken, plus where the band goes.
-     Nothing else. Instructions are read only if he taps them.
-     Lower-cased because shouty capitals make some voices spell words out. */
-  say(e.name + '. ' + (e.band
-        ? BANDS[e.band].label + ', ' + e.bandNote.toLowerCase() + '.' : ''));
-
-  app.innerHTML = topbar(`${st.n} of ${st.total}`,'Leave') + `
-    <div class="scroll">
-      <p class="kicker">${st.first?'First exercise':'Ready when you are'}</p>
-      <h1>${e.name}</h1>
-      <p class="clinical">${e.clinical}</p>
-      ${e.band?`<div class="card" style="border-color:${BANDS[e.band].colour}">
-        <p class="kicker" style="color:${BANDS[e.band].colour}">Band</p>
-        <div style="font-size:19px;font-weight:700">${BANDS[e.band].label}</div>
-        <div class="big-note">${e.bandNote}</div></div>`:''}
-      <div class="card tappable" onclick="readSteps('${st.id}')">
-        <p class="kicker">${reps} &middot; ${e.tempo}</p>
-        <ol class="steps">${e.steps.map(s=>`<li>${s}</li>`).join('')}</ol>
-        <p class="readme">Tap to read aloud</p></div>
-      ${e.note?`<div class="card"><p class="kicker">Note</p><div class="big-note">${e.note}</div></div>`:''}
-    </div>
-    <button class="big" onclick="next()">Start ${e.name.toLowerCase()}</button>
-    <button class="sec" onclick="skipExercise()">Skip this exercise</button>`;
-}
-
-function skipExercise(){
-  const id=steps[idx].id; let i=idx+1;
-  while(i<steps.length && steps[i].id===id) i++;
-  go(i);
-}
-
 /* ---------- a working set ---------- */
 function screenSet(st){
   const e=EXERCISES[st.id];
-  /* Just the set number, and the side if there is one. Nothing else. */
-  say((st.side ? `${st.side} side. ` : '') + `Set ${st.setNo} of ${e.sets}.`);
+  const exerciseCue=st.exerciseStart
+    ? e.name + '. ' + (e.band ? BANDS[e.band].label + ', ' + e.bandNote.toLowerCase() + '. ' : '')
+    : '';
+  say(exerciseCue + (st.side ? `${st.side} side. ` : '') + `Set ${st.setNo} of ${e.sets}.`);
 
   app.innerHTML = topbar(`${st.n} of ${st.total}`,'Leave') + `
     <div class="scroll">
@@ -440,13 +395,10 @@ function screenSet(st){
         <div class="metric"><div class="k">Set</div><div class="v">${st.setNo} / ${e.sets}</div></div>
         <div class="metric"><div class="k">Reps</div><div class="v">${e.reps}</div></div>
       </div>
-      ${e.override?`<div class="ovr"><p class="kicker">Physio override</p>
-        <h3>${e.override.title}</h3><p>${e.override.body}</p>
-        <div class="stock"><p class="kicker">Stock instruction &mdash; do not follow</p>
-        <s>${e.override.stock}</s></div></div>`:''}
       <div class="card tappable" onclick="readSteps('${st.id}')">
         <p class="kicker">${e.tempo}</p>
         <ol class="steps">${e.steps.map(s=>`<li>${s}</li>`).join('')}</ol>
+        ${e.note?`<p class="big-note">${e.note}</p>`:''}
         <p class="readme">Tap to read aloud</p></div>
     </div>
     <button class="big" onclick="next()">Set done<small>tap when you have finished all ${e.reps}</small></button>`;
@@ -460,8 +412,10 @@ function screenBlock(st){
   const colour = st.side==='Left' ? 'var(--rest)' : 'var(--go)';
   const ink    = st.side==='Left' ? '#06121f' : '#07120c';
 
-  /* Short. The direction is the one thing that changes and is easy to lose. */
-  say((st.blockNo===0 ? `${st.side} foot. ` : '') + dir + '.');
+  const exerciseCue=st.exerciseStart
+    ? e.name + '. ' + (e.band ? BANDS[e.band].label + ', ' + e.bandNote.toLowerCase() + '. ' : '')
+    : '';
+  say(exerciseCue + (st.blockNo===0 ? `${st.side} foot. ` : '') + dir + '.');
 
   app.innerHTML = topbar(`${st.n} of ${st.total}`,'Leave') + `
     <div class="scroll">
@@ -476,7 +430,7 @@ function screenBlock(st){
           <div style="flex:1">${b}</div>
           <div style="color:var(--dim)">8</div>
         </div>`).join('')}
-      <div class="card"><div class="big-note">Only the ${st.side.toLowerCase()} foot moves. The other stays planted. Keep tension on the band throughout.</div></div>
+      <div class="card"><div class="big-note">${BANDS[e.band].label}, ${e.bandNote.toLowerCase()}. Only the ${st.side.toLowerCase()} foot moves. The other stays planted. Keep tension on the band throughout.</div></div>
     </div>
     <button class="big" onclick="next()">Done &mdash; 8 ${dir.toLowerCase()}
       <small>${last ? (nextBlockLabel()) : 'next: '+e.blocks[st.blockNo+1].toLowerCase()}</small></button>`;
@@ -663,7 +617,7 @@ function render(){
   if(!steps.length){ screenToday(); return; }
   const st=steps[idx];
   if(!st){ screenToday(); return; }
-  ({ setup:screenSetup, intro:screenIntro, set:screenSet, block:screenBlock,
+  ({ setup:screenSetup, set:screenSet, block:screenBlock,
      rest:screenRest, swap:screenSwap, finish:screenFinish })[st.type](st);
 }
 
