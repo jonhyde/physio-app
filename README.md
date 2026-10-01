@@ -40,3 +40,10 @@ Key constraints, all learned the hard way:
 - **All sets on one leg before swapping.** Re-anchoring the Pilates band in the door
   is the biggest source of friction in the session.
 - **Plain English only.** No anatomical jargon anywhere in the copy.
+
+## Current programme
+
+Rehab C is the only active programme and appears every day. It contains four
+exercises, each with three sets of ten reps per side and 30-second rests between
+sets. The Copenhagen uses a bent moving leg. Choose exercises on the home screen lets you select two, three or all four.
+Rehab A and Rehab B are preserved in the view-only Archived programmes screen, reached through Settings.

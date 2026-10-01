@@ -54,6 +54,7 @@
     font-size:23px;font-weight:700;color:#07120c;background:var(--go);
     -webkit-appearance:none;letter-spacing:-.01em;flex:none;
   }
+  button.big.watch-start{font-size:24px;line-height:1.15;letter-spacing:-.02em}
   button.big small{display:block;font-size:14px;font-weight:600;opacity:.72;margin-top:5px;letter-spacing:0}
   button.sec{
     width:100%;border:1px solid var(--line);border-radius:13px;padding:15px;
@@ -175,11 +176,14 @@ function say(text){
   }catch(e){}
 }
 /* Read the instructions aloud, on request only. */
-function readSteps(id){
+function exerciseInstructions(e, side){
+  return e.stepsForSide ? e.stepsForSide(side || CONFIG.leadingLeg) : e.steps;
+}
+function readSteps(id, side){
   const e=EXERCISES[id];
   speechSynthesis.cancel();
   const bits=[e.name];
-  bits.push(...e.steps);
+  bits.push(...exerciseInstructions(e, side));
   say(bits.join(' '));
 }
 
@@ -201,7 +205,7 @@ document.addEventListener('visibilitychange',()=>{
 function otherLeg(l){ return l==='Left' ? 'Right' : 'Left'; }
 
 function buildSteps(order){
-  const out=[{type:'setup', order}];
+  const out=[];
   order.forEach((id,i)=>{
     const ex=EXERCISES[id];
     const firstWorkStep=out.length;
@@ -256,20 +260,8 @@ function next(){ go(idx+1); }
 function screenToday(){
   const d=new Date();
   const auto=WEEK[d.getDay()];
-  const key=sessionKey||auto;
+  const key=auto;
   const fmt=d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
-
-  if(!key){
-    app.innerHTML = topbar(fmt,'Settings') + `
-      <div class="scroll">
-        <h1>Rest day</h1>
-        <p class="lede">Nothing scheduled today. Rest days are part of the programme, not a gap in it.</p>
-        <div class="card"><p class="kicker">Next up</p><div class="big-note">${nextSessionText()}</div></div>
-      </div>
-      <button class="sec" onclick="pick('A')">Do Rehab A anyway</button>
-      <button class="sec" onclick="pick('B')">Do Rehab B anyway</button>`;
-    return;
-  }
 
   const s=SESSIONS[key];
   const rows=s.order.map(id=>{
@@ -289,17 +281,13 @@ function screenToday(){
     <div class="scroll">
       <p class="kicker">Today is</p>
       <h1>${s.title}</h1>
-      <p class="lede">${s.order.length} exercises &middot; around 20 minutes</p>
+      <p class="lede">${s.order.length} exercises &middot; daily</p>
       <div class="card">
         <div class="exlist">${rows}</div>
-        <div class="legend">
-          <div><span class="dot" style="background:var(--fabric)"></span>fabric loop</div>
-          <div><span class="dot" style="background:var(--pilates)"></span>pilates band</div>
-        </div>
       </div>
     </div>
-    <button class="big" onclick="start('${key}')">Start session</button>
-    <button class="sec" onclick="shorter('${key}')">Shorter session &mdash; pick 2</button>`;
+    <button class="big watch-start" onclick="start('${key}')">Start session<br>Don't forget to start Fitness+</button>
+    <button class="sec" onclick="shorter('${key}')">Choose exercises</button>`;
 }
 
 function nextSessionText(){
@@ -313,33 +301,56 @@ function nextSessionText(){
 }
 
 function shorter(key){
-  const s=SESSIONS[key];
+  const session=SESSIONS[key];
+  if(!session || session.archived) return;
   const chosen=new Set();
   const draw=()=>{
-    app.innerHTML = topbar('Shorter session','') + `
+    app.innerHTML=topbar('Choose exercises','') + `
       <div class="scroll">
-        <h1>Pick what you can</h1>
-        <p class="lede">Reiss said this is a real session, not a compromise. Vary which ones you pick.</p>
-        <div class="card">${s.order.map((id,i)=>{
+        <h1>Pick your exercises</h1>
+        <p class="lede">Choose two, three or all four.</p>
+        <div class="card">${session.order.map((id,i)=>{
           const e=EXERCISES[id];
-          return `<div class="chk" onclick="window.__t(${i})">
-                    <div class="box ${chosen.has(id)?'on':''}">${chosen.has(id)?'&check;':''}</div>
-                    <div><div class="nm">${e.name}</div><div class="cl">${bandChip(e)}</div></div>
-                  </div>`;
+          return `<div class="chk" role="checkbox" tabindex="0" aria-checked="${chosen.has(id)}"
+              onclick="window.__toggleExercise(${i})"
+              onkeydown="if(event.key===' ' || event.key==='Enter'){event.preventDefault();window.__toggleExercise(${i})}">
+            <div class="box ${chosen.has(id)?'on':''}">${chosen.has(id)?'&check;':''}</div>
+            <div class="nm">${e.name}</div></div>`;
         }).join('')}</div>
       </div>
-      <button class="big" ${chosen.size?'':'disabled'} onclick="window.__run()">
-        Start ${chosen.size} exercise${chosen.size===1?'':'s'}</button>
+      <button class="big watch-start" ${chosen.size>=2?'':'disabled'} onclick="window.__runSelected()">Start session<br>Don't forget to start Fitness+</button>
       <button class="sec" onclick="render()">Back</button>`;
   };
-  window.__t=i=>{ const id=s.order[i]; chosen.has(id)?chosen.delete(id):chosen.add(id); draw(); };
-  window.__run=()=>{ if(chosen.size) start(key, s.order.filter(id=>chosen.has(id))); };
+  window.__toggleExercise=i=>{
+    const id=session.order[i];
+    chosen.has(id)?chosen.delete(id):chosen.add(id); draw();
+  };
+  window.__runSelected=()=>{if(chosen.size>=2) start(key,session.order.filter(id=>chosen.has(id)));};
   draw();
 }
 
-function pick(k){ sessionKey=k; render(); }
+function screenArchive(key){
+  const archived=Object.entries(SESSIONS).filter(([,s])=>s.archived);
+  const selected=key && SESSIONS[key]?.archived ? SESSIONS[key] : null;
+  app.innerHTML = topbar('Archive','') + `
+    <div class="scroll">
+      <h1>${selected ? selected.title : 'Archived programmes'}</h1>
+      <p class="lede">Saved for reference. Your daily programme is Rehab C.</p>
+      ${selected ? selected.order.map(id=>{
+        const e=EXERCISES[id];
+        return `<div class="card"><h2>${e.name}</h2><p class="clinical">${e.clinical}</p>
+          <p class="big-note">${e.sets} sets &middot; ${e.reps}${e.perSide?' each side':''}</p>
+          ${e.band ? `<p class="big-note">${bandChip(e)} &middot; ${e.bandNote}</p>` : ''}
+          <ol class="steps">${e.steps.map(t=>`<li>${t}</li>`).join('')}</ol>
+          ${e.note ? `<p class="big-note">${e.note}</p>` : ''}</div>`;
+      }).join('') : archived.map(([k,s])=>`<button class="sec" onclick="screenArchive('${k}')">${s.title}</button>`).join('')}
+    </div>
+    ${selected ? `<button class="sec" onclick="screenArchive()">Back to archive</button>` : ''}
+    <button class="big" onclick="render()">Back to Rehab C</button>`;
+}
 
 function start(key, order){
+  if(!SESSIONS[key] || SESSIONS[key].archived) return;
   sessionKey=key; startedAt=Date.now();
   steps=buildSteps(order || SESSIONS[key].order);
   idx=0; lockScreen(); render();
@@ -351,31 +362,6 @@ function quit(){
     speechSynthesis.cancel(); clearInterval(timer);
     steps=[]; idx=0; sessionKey=null; render();
   }
-}
-
-/* ---------- setup ----------
-   Deliberately minimal. Placement is shown at the start of each exercise,
-   which is when it is actually needed, so it is not repeated here. */
-function screenSetup(st){
-  const used=[...new Set(st.order.map(id=>EXERCISES[id].band).filter(Boolean))];
-  const labels=used.map(b=>BANDS[b].label);
-
-  const kit=used.map(b=>
-    `<div class="kit"><div class="sw" style="background:${BANDS[b].colour}"></div>
-     <div class="t">${BANDS[b].label}</div></div>`).join('');
-
-  /* Silent. He is looking at the screen and already has the kit. */
-
-  app.innerHTML = topbar('Before you start','Leave') + `
-    <div class="scroll">
-      <div class="roomy">
-        <h1>Get the kit ready</h1>
-        <p class="lede">You will be told where each band goes when you get to it.</p>
-        <div class="card">${kit}</div>
-        <p class="big-note" style="margin-top:16px">Prop the phone where you can see it. The screen will stay awake.</p>
-      </div>
-    </div>
-    <button class="big" onclick="next()">All set</button>`;
 }
 
 /* ---------- a working set ---------- */
@@ -390,14 +376,14 @@ function screenSet(st){
     <div class="scroll">
       <h2>${e.name}</h2>
       <p class="clinical">${e.clinical}</p>
-      ${st.side?`<div class="side">Working leg</div><div class="sideval">${st.side.toUpperCase()}</div>`:''}
+      ${st.side?`<div class="side">${e.sideLabel || 'Working leg'}</div><div class="sideval">${st.side.toUpperCase()}</div>`:''}
       <div class="metrics">
         <div class="metric"><div class="k">Set</div><div class="v">${st.setNo} / ${e.sets}</div></div>
         <div class="metric"><div class="k">Reps</div><div class="v">${e.reps}</div></div>
       </div>
-      <div class="card tappable" onclick="readSteps('${st.id}')">
+      <div class="card tappable" onclick="readSteps('${st.id}', '${st.side || ''}')">
         <p class="kicker">${e.tempo}</p>
-        <ol class="steps">${e.steps.map(s=>`<li>${s}</li>`).join('')}</ol>
+        <ol class="steps">${exerciseInstructions(e, st.side).map(s=>`<li>${s}</li>`).join('')}</ol>
         ${e.note?`<p class="big-note">${e.note}</p>`:''}
         <p class="readme">Tap to read aloud</p></div>
     </div>
@@ -445,12 +431,13 @@ function nextBlockLabel(){
 
 /* ---------- rest ---------- */
 function screenRest(st){
-  let left=CONFIG.restSeconds;
+  const restSeconds=EXERCISES[st.id].restSeconds ?? CONFIG.restSeconds;
+  let left=restSeconds;
   const R=100, C=2*Math.PI*R;
   /* Silent. The countdown is on screen and he is looking at it. */
 
   const paint=()=>{
-    const frac=left/CONFIG.restSeconds;
+    const frac=left/restSeconds;
     app.innerHTML = topbar('Rest','Leave') + `
       <div class="scroll" style="display:flex;flex-direction:column;justify-content:center">
         <div class="ringwrap">
@@ -487,7 +474,7 @@ function screenSwap(st){
     <div class="scroll">
       <p class="kicker">That leg is finished</p>
       <h1>Swap to your ${st.to.toLowerCase()} leg</h1>
-      <p class="lede">No timer running. Re-anchor the band and turn round so the door is on your other side.</p>
+      <p class="lede">No timer running. ${sessionKey==='C' ? 'Change position to work the other side.' : 'Re-anchor the band and turn round so the door is on your other side.'}</p>
       ${e.band?`<div class="card" style="border-color:${BANDS[e.band].colour}">
         <p class="kicker" style="color:${BANDS[e.band].colour}">${BANDS[e.band].label}</p>
         <div class="big-note">${e.bandNote}</div></div>`:''}
@@ -596,8 +583,9 @@ function screenSettings(){
       </div>
       <div class="card">
         <p class="kicker">Programme</p>
-        <div class="big-note">Rehab A on Monday and Thursday, Rehab B on Tuesday and Saturday.
-        All sets on one leg before swapping. ${CONFIG.leadingLeg} leg leads.</div>
+        <div class="big-note">Rehab C every day. Rehab A and B are archived for reference.
+        All sets on one side before swapping. ${CONFIG.leadingLeg} leg leads.</div>
+        <button class="sec" onclick="screenArchive()">Archived programmes</button>
       </div>
     </div>
     <button class="big" onclick="render()">Done</button>`;
@@ -617,7 +605,7 @@ function render(){
   if(!steps.length){ screenToday(); return; }
   const st=steps[idx];
   if(!st){ screenToday(); return; }
-  ({ setup:screenSetup, set:screenSet, block:screenBlock,
+  ({ set:screenSet, block:screenBlock,
      rest:screenRest, swap:screenSwap, finish:screenFinish })[st.type](st);
 }
 

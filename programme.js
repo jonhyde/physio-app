@@ -9,6 +9,7 @@
 
 const BANDS = {
   fabric:  { label: 'Fabric loop',  colour: '#ffc857' },
+  loop: { label: 'Exercise band', colour: '#ffc857' },
   pilates: { label: 'Pilates band', colour: '#6ea8fe' }
 };
 
@@ -147,6 +148,76 @@ const EXERCISES = {
       'Push up through your front heel and your back toes.',
       'Keep pushing out against the band throughout.'
     ]
+  },
+
+  /* ---------------- REHAB C ----------------
+     Read from MoveHealth's modified programme, 1 October 2026.
+     Practitioner notes take precedence over generic video instructions. */
+  kneeling_side_plank: {
+    name: 'Side plank leg lifts', clinical: 'Hip abduction in kneeling side plank',
+    band: 'loop', bandNote: 'Around your knees',
+    sets: 3, reps: 10, perSide: true, groupBySide: true, restSeconds: 30,
+    tempo: 'Slow and controlled',
+    sideLabel: 'Leg lifting',
+    stepsForSide: leg => {
+      const top=leg.toLowerCase();
+      const bottom=leg==='Left' ? 'right' : 'left';
+      return [
+        'Put the band around your knees.',
+        `Lie on your ${bottom} side.`,
+        `Bend your bottom ${bottom} knee to 90°. Keep your top ${top} leg straight. Support yourself on your ${bottom} forearm.`,
+        'Lift your body into a side plank, making a straight line from your head to the knee on the floor.',
+        'Keep your toes pointing forwards.',
+        `Lift your top ${top} leg, then lower it slowly.`
+      ];
+    }
+  },
+  single_leg_bridge: {
+    name: 'Single-leg bridges', clinical: 'Single leg glute bridge',
+    band: 'loop', bandNote: 'Around your knees',
+    sets: 3, reps: 10, perSide: true, groupBySide: true, restSeconds: 30,
+    tempo: 'Slow and controlled',
+    stepsForSide: leg => {
+      const supporting=leg.toLowerCase();
+      const lifted=leg==='Left' ? 'right' : 'left';
+      return [
+        'Put the band around your knees.',
+        'Lie on your back with your knees bent and your heels on the floor. Keep your toes raised and tension on the band throughout.',
+        `Shift your weight onto your ${supporting} leg and lift your ${lifted} foot off the floor. Keep your supporting ${supporting} heel in place.`,
+        'Lift your hips until there is a straight line from your knee to your shoulders, then lower slowly.'
+      ];
+    }
+  },
+  fire_hydrant: {
+    name: 'Tabletop side knee raise', clinical: 'Fire hydrant with an exercise band in four point kneeling',
+    band: 'loop', bandNote: 'Around your thighs, just above your knees',
+    sets: 3, reps: 10, perSide: true, groupBySide: true, restSeconds: 30,
+    sideLabel: 'Knee lifting', tempo: 'Slow and controlled',
+    stepsForSide: leg => [
+      'Put the exercise band around your thighs, just above your knees.',
+      'Get onto all fours, hands below your shoulders and knees below your hips.',
+      `Keeping your ${leg.toLowerCase()} knee bent, lift it out to the side, then lower it back slowly.`,
+      'Keep tension on the band throughout. Avoid twisting your hips or upper body.'
+    ]
+  },
+  short_lever_copenhagen: {
+    name: 'Supported side plank — bottom knee lifts', clinical: 'Short lever Copenhagen',
+    sets: 3, reps: 10, perSide: true, groupBySide: true, restSeconds: 30,
+    equipment: 'Bench', tempo: 'Slow and controlled',
+    sideLabel: 'Bottom leg moving',
+    stepsForSide: leg => {
+      const bottom=leg.toLowerCase();
+      const top=leg==='Left' ? 'right' : 'left';
+      return [
+        `Lie on your ${bottom} side with your elbow below your shoulder.`,
+        `Rest your bent top ${top} leg on the bench.`,
+        `Keep your bottom ${bottom} leg bent at the knee underneath it.`,
+        `Push through your arm and lift your body into a straight line from your supported ${top} knee to your shoulder.`,
+        'Hold this position.',
+        `Keep your bottom ${bottom} knee bent as you lift that leg towards the underside of the bench, then lower it slowly.`,
+        'Keep your hips facing forward throughout.'
+      ];
+    }
   }
 };
 
@@ -157,14 +228,13 @@ const EXERCISES = {
      A: sideways_walks, forward_back_walks, standing_side_lifts, hip_lifts
      B: standing_band_steps, squats, single_leg_mini_squats, split_squats  */
 const SESSIONS = {
-  A: { title: 'Rehab A', order: ['sideways_walks','standing_side_lifts','squats','hip_lifts'] },
-  B: { title: 'Rehab B', order: ['standing_band_steps','forward_back_walks','single_leg_mini_squats','split_squats'] }
+  C: { title: 'Rehab C', order: ['kneeling_side_plank','single_leg_bridge','fire_hydrant','short_lever_copenhagen'] },
+  A: { title: 'Rehab A', archived: true, order: ['sideways_walks','standing_side_lifts','squats','hip_lifts'] },
+  B: { title: 'Rehab B', archived: true, order: ['standing_band_steps','forward_back_walks','single_leg_mini_squats','split_squats'] }
 };
 
-/* Mon A, Tue B, Thu A, Sat B. Everything else is a rest day.
-   Four sessions a week means the A/B alternation lands on the same
-   weekdays every week, so this is a fixed map rather than a rolling one. */
-const WEEK = { 0:null, 1:'A', 2:'B', 3:null, 4:'A', 5:null, 6:'B' };
+/* Rehab C is the sole daily programme. A and B are archived. */
+const WEEK = { 0:'C', 1:'C', 2:'C', 3:'C', 4:'C', 5:'C', 6:'C' };
 
 const CONFIG = {
   restSeconds: 15,
