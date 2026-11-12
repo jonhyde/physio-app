@@ -1,6 +1,5 @@
 /* ------------------------------------------------------------------
-   The programme. Everything clinical lives here and nowhere else.
-   Prescribed by Reiss, August 2026. Plain-English copy throughout.
+   Exercise programmes and schedule.
 
    say     = spoken aloud (may be phonetically respelled for the voice)
    name    = plain-English heading shown on screen
@@ -79,7 +78,7 @@ const EXERCISES = {
       'Lower back down.',
       'Slowly both ways. Do not rush it.'
     ],
-    note: 'Single leg progression is authorised but NOT active. Stay on two legs.'
+    note: 'Keep both feet on the floor.'
   },
 
   /* ---------------- REHAB B ---------------- */
@@ -111,7 +110,7 @@ const EXERCISES = {
     steps: [
       'Fabric loop around your thighs, just above your knees.',
       'Feet shoulder width apart, arms folded across your chest, chest tall.',
-      'Sit down no further than a Pilates squat. Going deeper squeezes the sore tendon against the bone, which is what the shockwave is treating.',
+      'Sit down no further than a Pilates squat.',
       'Push your knees outwards against the band as you go.',
       'Drive up through your heels to stand.'
     ]
@@ -150,9 +149,7 @@ const EXERCISES = {
     ]
   },
 
-  /* ---------------- REHAB C ----------------
-     Read from MoveHealth's modified programme, 1 October 2026.
-     Practitioner notes take precedence over generic video instructions. */
+  /* ---------------- REHAB C ---------------- */
   kneeling_side_plank: {
     name: 'Side plank leg lifts', clinical: 'Hip abduction in kneeling side plank',
     band: 'loop', bandNote: 'Around your knees',
@@ -221,25 +218,130 @@ const EXERCISES = {
   }
 };
 
-/* Updated 10 August 2026 ("Rehab Programme 2" in Move Health).
-   Reiss swapped two exercises to even the sessions up: Squat moved from B to A,
-   Monster walks moved from A to B. Same eight exercises, same sets, reps and rests.
-   Previous split, for reference:
-     A: sideways_walks, forward_back_walks, standing_side_lifts, hip_lifts
-     B: standing_band_steps, squats, single_leg_mini_squats, split_squats  */
+/* Current exercise programmes. */
+const REHAB_PROGRAMME = {
+  crab_walks: {
+    name: 'Sideways band walks', clinical: 'Crab walks with an exercise band around ankles',
+    band: 'loop', bandNote: 'Just above your ankles',
+    sets: 3, reps: 8, restSeconds: 30, tempo: 'Controlled',
+    steps: [
+      'Stand with your feet shoulder width apart, head up and chest tall.',
+      'Place the band just above your ankles and bend into a half squat with tension in the band.',
+      'Stay in the half squat as you step sideways, then walk back in the opposite direction.',
+      'Keep your chest tall and resist the band pulling your leg across as you step.'
+    ]
+  },
+  bench_copenhagen: {
+    name: 'Bench side plank with leg lift', clinical: 'Short lever Copenhagen',
+    sets: 3, reps: 10, perSide: true, groupBySide: true, restSeconds: 30,
+    tempo: 'Slow and controlled', sideLabel: 'Bottom leg moving',
+    steps: [
+      'Lie on your side with your elbow below your shoulder. Keep your bottom leg straight beneath the bench and rest your bent top leg on the bench.',
+      'Push through your arm to lift your body into a straight line from your supported knee to your shoulder.',
+      'Hold that position while you lift your bottom leg towards the underside of the bench, then lower it.',
+      'Keep your hips facing forward throughout.'
+    ],
+    note: 'Use a bench at the gym. Move slowly and with control.'
+  },
+  split_stance_rotation: {
+    name: 'Split-stance hip turns', clinical: 'Split stance standing hip internal rotations against a cable',
+    sets: 3, reps: 10, perSide: true, groupBySide: true, restSeconds: 30,
+    tempo: 'Controlled', sideLabel: 'Front leg',
+    steps: [
+      'Stand side-on to a cable machine or resistance band in a split stance, with your outside leg in front.',
+      'Hold the cable or band with your outside hand.',
+      'Pull against the resistance by turning your hips towards your front leg. Drive the turn from your hips and feel the glutes in your front leg work.'
+    ]
+  },
+  leg_press: {
+    name: '45-degree leg press', clinical: '45 degree leg press',
+    sets: 3, reps: 8, restSeconds: 30, tempo: 'Slow down, slightly quicker up',
+    steps: [
+      'Sit with your feet hip width apart on the plate and your back against the seat.',
+      'Push the plate up, release the support and bend your knees to lower the plate towards you.',
+      'Push through your heels to move the plate back up. Keep a slight bend in your knees at the top.'
+    ],
+    note: '50 kg leg press. Load it heavily and adjust the weight as appropriate. Lower slowly to a comfortable range, then push back up slightly quicker and more forcefully.'
+  },
+  wall_fire_hydrant: {
+    name: 'Wall-supported knee raise', clinical: 'Fire hydrants with hip hinge',
+    band: 'loop', bandNote: 'Around your thighs, just above your knees',
+    sets: 3, reps: 10, perSide: true, groupBySide: true, restSeconds: 30,
+    tempo: 'Slow and controlled', sideLabel: 'Standing leg',
+    steps: [
+      'Put the band around your thighs just above your knees. Stand facing away from the wall with your head up and chest tall.',
+      'Shift your weight onto your standing leg. Bend the other knee to 90 degrees and put the sole of that foot against the wall.',
+      'Hinge forward slightly at the hips and soften your standing knee.',
+      'Keep the outside of your foot against the wall as you move your raised leg away from your standing leg, then return it to the start.',
+      'Keep your hips facing forwards.'
+    ],
+    note: 'Use heavy resistance. Move slowly and with control, pivot on your toes against the wall and keep your weight over the standing leg.'
+  },
+  lateral_step_down: {
+    name: 'Side step-down with heel tap', clinical: 'Lateral step down with heel tap',
+    sets: 3, reps: 10, perSide: true, groupBySide: true, restSeconds: 30,
+    tempo: 'Slow and controlled lowering', sideLabel: 'Leg on the step',
+    steps: [
+      'Stand tall on the edge of a step and shift your weight onto one foot. Hold the other foot in the air beside the step.',
+      'Keep your chest tall and bend your standing knee until your free heel touches the floor.',
+      'Push through the foot on the step to stand up again. Keep your hips level and your standing knee neutral throughout.'
+    ],
+    note: 'Use the edge of the step so you can lower straight down. Keep your pelvis steady. Hold a weight or wear a heavy backpack and adjust the weight as appropriate.'
+  },
+  standing_adduction: {
+    name: 'Standing inward leg pulls', clinical: 'Hip adduction in standing',
+    band: 'loop', bandNote: 'Just above your ankle, anchored at ankle height on the same side',
+    sets: 3, reps: 10, perSide: true, groupBySide: true, restSeconds: 30,
+    tempo: 'Slow and controlled',
+    steps: [
+      'Stand with your feet hip width apart, head up and chest tall. Put the band just above the working ankle and anchor it at ankle height on that same side.',
+      'Put your hands on your hips, shift your weight onto the unbanded leg and lift the banded foot off the floor.',
+      'Keep your chest upright and your moving knee slightly bent. Draw the banded leg inwards, then slowly resist the pull as you return it outwards.'
+    ],
+    note: 'Use a heavy band or cable resistance. Squeeze your inner thigh at the end of the inward movement.'
+  },
+  goblet_squat: {
+    name: 'Kettlebell goblet squat', clinical: 'Goblet squat with a kettlebell',
+    sets: 3, reps: 10, restSeconds: 30, tempo: 'Slow and controlled lowering',
+    steps: [
+      'Stand with your feet slightly wider than hip width, toes pointing out, and bring the kettlebell up to your chest.',
+      'Keep your chest tall and bend into a squat, keeping your knees in line with your toes.',
+      'Keep your weight through your heels and push through them to stand back up.'
+    ],
+    note: '20 kg kettlebell. Lower slowly within a comfortable range. Use a heavy load and adjust the weight as appropriate.'
+  }
+};
+Object.assign(EXERCISES, REHAB_PROGRAMME);
+
 const SESSIONS = {
-  C: { title: 'Rehab C', order: ['kneeling_side_plank','single_leg_bridge','fire_hydrant','short_lever_copenhagen'] },
-  A: { title: 'Rehab A', archived: true, order: ['sideways_walks','standing_side_lifts','squats','hip_lifts'] },
-  B: { title: 'Rehab B', archived: true, order: ['standing_band_steps','forward_back_walks','single_leg_mini_squats','split_squats'] }
+  A: { title: 'Rehab A', order: ['crab_walks','bench_copenhagen','split_stance_rotation','leg_press'] },
+  B: { title: 'Rehab B', order: ['wall_fire_hydrant','lateral_step_down','standing_adduction','goblet_squat'] },
+  C: { title: 'Rehab C', archived: true, order: ['kneeling_side_plank','single_leg_bridge','fire_hydrant','short_lever_copenhagen'] },
+  oldA: { title: 'Rehab A (August 2026)', archived: true, order: ['sideways_walks','standing_side_lifts','squats','hip_lifts'] },
+  oldB: { title: 'Rehab B (August 2026)', archived: true, order: ['standing_band_steps','forward_back_walks','single_leg_mini_squats','split_squats'] }
 };
 
-/* Rehab C is the sole daily programme. A and B are archived. */
-const WEEK = { 0:'C', 1:'C', 2:'C', 3:'C', 4:'C', 5:'C', 6:'C' };
+const SCHEDULE = { start: Date.UTC(2026, 10, 12), intervalDays: 2, order: ['A', 'B'] };
+
+function scheduledSession(date, afterToday = false) {
+  const dayMs = 86400000;
+  // Use local calendar dates so clock changes never shift the rotation.
+  const today = Date.UTC(date.getFullYear(), date.getMonth(), date.getDate());
+  const firstDay = today + (afterToday ? dayMs : 0);
+  const slot = Math.max(0, Math.ceil((firstDay - SCHEDULE.start) / (SCHEDULE.intervalDays * dayMs)));
+  const scheduledDay = SCHEDULE.start + slot * SCHEDULE.intervalDays * dayMs;
+  const utcDate = new Date(scheduledDay);
+  return {
+    key: SCHEDULE.order[slot % SCHEDULE.order.length],
+    date: new Date(utcDate.getUTCFullYear(), utcDate.getUTCMonth(), utcDate.getUTCDate()),
+    today: scheduledDay === today
+  };
+}
 
 const CONFIG = {
   restSeconds: 15,
   massageMinutesPerLeg: 3,
-  leadingLeg: 'Left',        // more symptomatic side goes first
+  leadingLeg: 'Left',
   defaultVoice: 'Samantha',
   massageAvoid: 'Stay off the side of your hip and off your glutes.',
   massageOk: 'IT band, quads, hamstrings, calves and adductors are all fine.'

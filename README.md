@@ -1,10 +1,8 @@
 # physio-app
 
-A personal GTPS rehab app, served as an offline home-screen web app.
+An offline home-screen app for guided exercise sessions.
 
 No build step, no framework, no dependencies. Static files only.
-
-**Live at:** https://jonhyde.github.io/physio-app/
 
 | File | Purpose |
 |---|---|
@@ -18,13 +16,13 @@ No build step, no framework, no dependencies. Static files only.
 ## Changing the programme
 
 Edit `programme.js` only. Exercise names, reps, sets, instructions, bands and
-the weekday map are all there. Then **bump `CACHE` in `sw.js`**
+the schedule are all there. Then **bump `CACHE` in `sw.js` and update the `programme.js` query version in both `index.html` and `sw.js`**
 or devices will keep serving the old version.
 
 ## Design
 
 Concept 1a from the Claude Design exploration: **the set is the unit, not the rep.**
-The voice reads out what to do, then goes quiet. Jon works at his own pace and
+The voice reads out what to do, then goes quiet. You work at your own pace and
 taps once when the set is finished. Rests are timed, because that is the only part
 of a session a clock is good at. Nothing is timed between exercises.
 
@@ -43,7 +41,8 @@ Key constraints, all learned the hard way:
 
 ## Current programme
 
-Rehab C is the only active programme and appears every day. It contains four
-exercises, each with three sets of ten reps per side and 30-second rests between
-sets. The Copenhagen uses a bent moving leg. Choose exercises on the home screen lets you select two, three or all four.
-Rehab A and Rehab B are preserved in the view-only Archived programmes screen, reached through Settings.
+Rehab A and Rehab B alternate every other day, starting with Rehab A on
+12 November 2026. Rest days show the next scheduled session. Starting a session
+early or missing one does not change the calendar. Each workout contains four
+exercises. Rehab C and the August versions of A and B are available in Settings
+under Archived programmes.

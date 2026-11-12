@@ -136,7 +136,7 @@
 <body>
 <div id="app"></div>
 
-<script src="programme.js"></script>
+<script src="programme.js?v=24"></script>
 <script>
 /* =================== state =================== */
 const app = document.getElementById('app');
@@ -160,9 +160,7 @@ function chosenVoice(){
       || voices.find(v=>(v.lang||'').toLowerCase().startsWith('en'))
       || null;
 }
-/* The voice is deliberately sparse. Jon is holding the phone and reading it,
-   and anything spoken competes with the podcast he is listening to.
-   Speak only what he cannot see, or has asked to hear. */
+/* Keep automatic spoken cues brief. Read full instructions on request. */
 function say(text){
   if(!text || !LS.get('speech',true)) return;
   try{
@@ -195,6 +193,7 @@ async function lockScreen(){
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='visible'){
     if(sessionKey) lockScreen();
+    else if(document.querySelector('[data-today]')) screenToday();
     loadVoices();
   }else{
     speechSynthesis.cancel();
@@ -259,8 +258,8 @@ function next(){ go(idx+1); }
 
 function screenToday(){
   const d=new Date();
-  const auto=WEEK[d.getDay()];
-  const key=auto;
+  const upcoming=scheduledSession(d);
+  const {key}=upcoming;
   const fmt=d.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
 
   const s=SESSIONS[key];
@@ -278,26 +277,27 @@ function screenToday(){
   }).join('');
 
   app.innerHTML = topbar(fmt,'Settings') + `
-    <div class="scroll">
-      <p class="kicker">Today is</p>
+    <div class="scroll" data-today>
+      <p class="kicker">${upcoming.today ? 'Today’s session' : 'Rest day'}</p>
       <h1>${s.title}</h1>
-      <p class="lede">${s.order.length} exercises &middot; daily</p>
+      <p class="lede">${upcoming.today
+        ? `${s.order.length} exercises &middot; Every other day`
+        : `Next session on ${formatSessionDate(upcoming.date)}`}</p>
       <div class="card">
         <div class="exlist">${rows}</div>
       </div>
     </div>
-    <button class="big watch-start" onclick="start('${key}')">Start session<br>Siri, Start Physio</button>
+    <button class="big watch-start" onclick="start('${key}')">${upcoming.today ? 'Start session' : 'Start next session early'}<br>Siri, Start Physio</button>
     <button class="sec" onclick="shorter('${key}')">Choose exercises</button>`;
 }
 
+function formatSessionDate(date){
+  return date.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+}
+
 function nextSessionText(){
-  const t=new Date();
-  for(let i=1;i<=7;i++){
-    const d=new Date(t); d.setDate(t.getDate()+i);
-    const k=WEEK[d.getDay()];
-    if(k) return `${SESSIONS[k].title} on ${d.toLocaleDateString('en-GB',{weekday:'long'})}`;
-  }
-  return '';
+  const upcoming=scheduledSession(new Date(), true);
+  return `${SESSIONS[upcoming.key].title} on ${formatSessionDate(upcoming.date)}`;
 }
 
 function shorter(key){
